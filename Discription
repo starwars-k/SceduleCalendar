@@ -1,0 +1,16 @@
+# SceduleCalendar
+
+Calendar
+	- Birthday
+	- Class Schedule
+	- Job Schedule
+	- Memo(HomeWork, Packing List)
+- Task list
+	- Auto Fill Task
+- Reminder
+- Job
+	- Income
+		- Calculator
+	- Tax Estimate
+		- Calc
+	- Gross Income, Net Income(Subtracting estimated taxes automatically)

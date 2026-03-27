@@ -1,5 +1,4 @@
-# SceduleCalendar
-# Frontend: in Dart using Flutter
+	Frontend: in Dart using Flutter
 		Calender Page
 		Task List Page
 		Reminder Page

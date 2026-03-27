@@ -1,10 +1,10 @@
 # SceduleCalendar
-Frontend: in Dart using Flutter
+# Frontend: in Dart using Flutter
 		Calender Page
 		Task List Page
 		Reminder Page
 		Job Income Page
-Backend: in Java using Spring Boot
+# Backend: in Java using Spring Boot
 		Calendar Logic (DailyEvent class)
 		Database(H2 or MySQL)
 		AutoFill Engine

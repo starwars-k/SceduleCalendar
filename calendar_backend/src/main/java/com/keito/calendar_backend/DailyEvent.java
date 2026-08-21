@@ -23,6 +23,7 @@ public class DailyEvent {
     private LocalDateTime repeatEndOn;
     private String description;
     private String eventType;
+    private String seriesId;
     public DailyEvent(){}
     
     public DailyEvent(String title, String description, LocalDateTime startTime, LocalDateTime endTime, String eventType, boolean isAllDay){
@@ -74,12 +75,7 @@ public class DailyEvent {
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
     }
-    public String getEventType() {
-        return eventType;
-    }
-    public void setEventType(String eventType) {
-        this.eventType = eventType;
-    }
+    
     public boolean getIsRepeating(){
         return isRepeating;
     }
@@ -109,5 +105,17 @@ public class DailyEvent {
     }
     public void setRepeatEndOn(LocalDateTime repeatEndOn){
         this.repeatEndOn = repeatEndOn;
+    }
+    public String getEventType() {
+        return eventType;
+    }
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
+    public String getSeriesId(){
+        return seriesId;
+    }
+    public void setSeriesId(String seriesId){
+        this.seriesId = seriesId;
     }
 }

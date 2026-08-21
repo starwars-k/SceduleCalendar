@@ -422,8 +422,8 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Future<void> fetchEventsFromJava() async {
     try{
-      final response = await http.get(Uri.parse('http://localhost:8080/api/events')); 
-
+      //final response = await http.get(Uri.parse('http://localhost:8080/api/events')); 
+        final response = await http.get(Uri.parse('http://calendar-backend-qhny.onrender.com/api/events')); // Use the deployed backend URL
       if (response.statusCode == 200) {
         List<dynamic> body = jsonDecode(response.body);
         setState(() {
@@ -466,7 +466,8 @@ class _CalendarPageState extends State<CalendarPage> {
     // print("Attempting to delete event with ID: $id");
     try{
       final response = await http.delete(
-        Uri.parse('http://localhost:8080/api/events/$id'),
+        //Uri.parse('http://localhost:8080/api/events/$id'),
+        Uri.parse('http://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
       );
       if(response.statusCode == 200 || response.statusCode == 201){
         fetchEventsFromJava(); // Refresh the event list after deleting
@@ -525,18 +526,20 @@ class _CalendarPageState extends State<CalendarPage> {
     }
     try{
       final response = await http.post(
-        Uri.parse('http://localhost:8080/api/events/batch'),
+        //Uri.parse('http://localhost:8080/api/events/batch'),
+        Uri.parse('http://calendar-backend-qhny.onrender.com/api/events/batch'), // Use the deployed backend URL
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(eventBatch),
       );
       if(response.statusCode == 200 || response.statusCode == 201){
         fetchEventsFromJava(); // Refresh the event list after batch saving
         Navigator.pop(context);
+      }else{
+        print("Failed to save batch events. Status code: ${response.statusCode}");
       }
     }catch(e){
-      print("ERROR saving batch events: $e");
+      print("EXCEPTION caught while saving batch events: $e");
     }
-
   }
 
   //iOS style date picker for selecting the repeat end date

@@ -8,4 +8,5 @@ import java.time.LocalDateTime;
 public interface EventRepository extends JpaRepository<DailyEvent, Long> {
     @Transactional
     void deleteBySeriesIdAndStartTimeGreaterThanEqual(String seriesId, LocalDateTime startTime);
+    java.util.List<DailyEvent> findBySeriesIdAndStartTimeGreaterThanEqual(String seriesId);
 }

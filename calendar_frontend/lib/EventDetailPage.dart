@@ -194,7 +194,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     Navigator.pop(context);
                     _deleteFutureEvents();
                   },
-                  child: const Text("Delete all future events", style: TextStyle(color: Colors.red)),
+                  child: const Text("Delete all after this event", style: TextStyle(color: Colors.red)),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),

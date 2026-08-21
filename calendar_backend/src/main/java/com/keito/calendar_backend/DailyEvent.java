@@ -26,15 +26,6 @@ public class DailyEvent {
     private String seriesId;
     public DailyEvent(){}
     
-    public DailyEvent(String title, String description, LocalDateTime startTime, LocalDateTime endTime, String eventType, boolean isAllDay){
-        this.title = title;
-        this.isAllDay = isAllDay;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.isRepeating = false;
-        this.eventType = eventType;
-        this.description = description;
-    }
     public DailyEvent(String title, String description, LocalDateTime startTime, LocalDateTime endTime, String eventType, boolean isAllDay, boolean isRepeating){
         this.title = title;
         this.description = description;

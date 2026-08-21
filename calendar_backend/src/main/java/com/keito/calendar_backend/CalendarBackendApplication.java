@@ -24,9 +24,10 @@ public class CalendarBackendApplication {
 					"Task",
 					false,
 					false
-			);}
+				);
 			repository.save(testEvent);
 			System.out.println(">>> Sample Event Saved to Database!");
+			}
 		};
 	}
 }

@@ -20,7 +20,7 @@ public class EventController {
     }
 
     @PostMapping
-    public DailyEvent createEvent(@RequestBody DailyEvent event) {
+    public List<DailyEvent> createEvent(@RequestBody DailyEvent event) {
         List<DailyEvent> eventsToSave = new ArrayList<>();
         if(!event.getIsRepeating() || event.getRepeatType() == null){
             eventsToSave.add(repository.save(event));
@@ -30,6 +30,7 @@ public class EventController {
         LocalDateTime currentEndTime = event.getEndTime();
         LocalDateTime repeatEndOn = event.getRepeatEndOn();
         String repeatType = event.getRepeatType();
+
         int maxCount = 1000; // Limit to prevent infinite loops
         for(int i = 0; i < maxCount; i++){
             if(repeatEndOn != null && currentStartTime.isAfter(repeatEndOn)){

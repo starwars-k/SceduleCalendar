@@ -54,7 +54,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Future<void> _updateEvent() async {
     final response = await http.put(
-      Uri.parse('http://localhost:8080/api/events/${widget.event.id}'),
+      //Uri.parse('http://localhost:8080/api/events/${widget.event.id}'),
+      Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/${widget.event.id}'), // Use the deployed backend URL
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'title': _titleController.text,
@@ -79,7 +80,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
     try{
       final response = await http.put(
-        Uri.parse('http://localhost:8080/api/events/${widget.event.id}'),
+        //Uri.parse('http://localhost:8080/api/events/${widget.event.id}'),
+        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/${widget.event.id}'), // Use the deployed backend URL
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'title': _titleController.text,

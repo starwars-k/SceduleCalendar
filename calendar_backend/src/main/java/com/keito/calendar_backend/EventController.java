@@ -19,7 +19,7 @@ public class EventController {
         return repository.findAll();
     }
 
-    @PostMapping
+    @PostMapping({"", "/"})
     public List<DailyEvent> createEvent(@RequestBody DailyEvent event) {
         List<DailyEvent> eventsToSave = new ArrayList<>();
         if(!event.getIsRepeating() || event.getRepeatType() == null){

@@ -485,57 +485,34 @@ class _CalendarPageState extends State<CalendarPage> {
     return '$base.$ms';
   }
   Future<void> _saveBatchEvents(DateTime startTime, DateTime endTime) async {
-    List<Map<String, dynamic>> eventBatch = [];
-    int occurrences = !_isRepeating ? 1 : 100; // Save 100 occurrences for repeating events
-
-    for(int i = 0; i < occurrences; i++){
-      DateTime start;
-      DateTime end;
-      if(_repeatType == 'Yearly'){
-        start = DateTime(startTime.year+i, startTime.month, startTime.day, startTime.hour, startTime.minute);
-        end = DateTime(endTime.year+i, endTime.month, endTime.day, endTime.hour, endTime.minute);
-      }else if(_repeatType == 'Monthly'){
-        start = DateTime(startTime.year, startTime.month+i, startTime.day, startTime.hour, startTime.minute);
-        end = DateTime(endTime.year, endTime.month+i, endTime.day, endTime.hour, endTime.minute);
-      }else if(_repeatType == 'Weekly'){
-        Duration offset = Duration(days: i * 7);
-        start = startTime.add(offset);
-        end = endTime.add(offset);
-      }else if(_repeatType == 'Biweekly'){
-        Duration offset = Duration(days: i * 14);
-        start = startTime.add(offset);
-        end = endTime.add(offset);
-      }else{ // Daily or None
-        Duration offset = Duration(days: i);
-        start = startTime.add(offset);
-        end = endTime.add(offset);
-      }
-
-      if(_isRepeating && _endOn && start.isAfter(_repeatEndDate)) {
-        break; // Stop adding events if the start time exceeds the repeat end date
-      }
-      
-      eventBatch.add({
+    try{
+      final Map<String, dynamic> eventData ={
         'title': _titleController.text,
         'description': _memoController.text,
-        'startTime': _formatToBackendIso(start),
-        'endTime': _formatToBackendIso(end),
+        'startTime': _formatToBackendIso(startTime),
+        'endTime': _formatToBackendIso(endTime),
         'eventType': _selectedType,
         'isAllDay': _isAllDay,
-      });
-    }
-    try{
+        'isRepeating': _isRepeating,
+        'repeatType': _isRepeating ? _repeatType : 'None',
+        'endOn': _isRepeating ? _endOn : false,
+        'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
+      };
+
+      print("Sending event to server: $eventData");
+
       final response = await http.post(
         //Uri.parse('http://localhost:8080/api/events/batch'),
-        Uri.parse('http://calendar-backend-qhny.onrender.com/api/events/batch'), // Use the deployed backend URL
+        Uri.parse('http://calendar-backend-qhny.onrender.com/api/events/'), // Use the deployed backend URL
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(eventBatch),
+        body: jsonEncode(eventData),
       );
       if(response.statusCode == 200 || response.statusCode == 201){
         fetchEventsFromJava(); // Refresh the event list after batch saving
         Navigator.pop(context);
       }else{
         print("Failed to save batch events. Status code: ${response.statusCode}");
+        print("Response body: ${response.body}");
       }
     }catch(e){
       print("EXCEPTION caught while saving batch events: $e");

@@ -166,7 +166,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
         if (response.statusCode == 200 || response.statusCode == 204) {
           widget.onDelete(widget.event.id!);
           Navigator.pop(context);
-          Navigator.pop(context);
         } else {
           print("Failed to delete future events: ${response.statusCode}");
         }

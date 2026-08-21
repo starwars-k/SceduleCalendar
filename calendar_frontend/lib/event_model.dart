@@ -8,8 +8,8 @@ class DailyEvent{
   final bool isAllDay;
   final bool isRepeating;
   final String? repeatType;
+  final bool? endOn;
   final DateTime? repeatEndOn;
-  final DateTime? endOn;
   final String? seriesId;
 
   DailyEvent({
@@ -28,30 +28,24 @@ class DailyEvent{
   });
 
   factory DailyEvent.fromJson(Map<String, dynamic> json){
-    var rawStart = json['startTime'] ?? json['startTime'];
-    var rawEnd = json['endTime'] ?? json['endTime'];
-    var rawType = json['eventType'] ?? json['eventType'];
-
     return DailyEvent(
       id: json['id'] is int ? json['id'] : (int.tryParse(json['id']?.toString() ?? '0') ?? 0),
       title: json['title'] ?? 'No Title',
       description: json['description']?.toString() ?? '',
-      startTime: rawStart != null 
-        ? DateTime.parse(rawStart.toString()) 
+      startTime: json['startTime'] != null 
+        ? DateTime.parse(json['startTime'].toString()) 
         : DateTime.now(),
-      endTime: rawEnd != null 
-        ? DateTime.parse(rawEnd.toString()) 
+      endTime: json['endTime'] != null 
+        ? DateTime.parse(json['endTime'].toString()) 
         : DateTime.now(),
-      eventType: rawType?.toString() ?? 'Unknown',
-      repeatType: json['repeatType']?.toString(),
+      eventType: json['eventType']?.toString() ?? 'Unknown',
       isAllDay: json['isAllDay'] ?? false,
       isRepeating: json['isRepeating'] ?? false,
+      repeatType: json['repeatType']?.toString(),
       repeatEndOn: json['repeatEndOn'] != null
         ? DateTime.parse(json['repeatEndOn'].toString())
         : null,
-      endOn: json['endOn'] != null
-        ? DateTime.parse(json['endOn'].toString())
-        : null,
+      endOn: json['endOn'] ?? false,
       seriesId: json['seriesId']?.toString(), 
     );
   }

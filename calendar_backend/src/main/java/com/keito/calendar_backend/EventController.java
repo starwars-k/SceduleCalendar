@@ -83,12 +83,17 @@ public class EventController {
     public void deleteFutureEvents(@PathVariable Long id){
         DailyEvent targetEvent = repository.findById(id).orElse(null);
         if(targetEvent != null) return;
-        if(targetEvent.getSeriesId() != null){
+        System.out.println("DEBUG: Target Event Series ID: " + targetEvent.getId());
+        System.out.println("DEBUG: Target Event Start Time: " + targetEvent.getSeriesId());
+        System.out.println("DEBUG: Target Event End Time: " + targetEvent.getStartTime());
+        if(targetEvent.getSeriesId() != null && !targetEvent.getSeriesId().isEmpty()){
             repository.deleteBySeriesIdAndStartTimeGreaterThanEqual(
                 targetEvent.getSeriesId(), 
                 targetEvent.getStartTime()
             );
+            System.out.println("DEBUG: Deleted future events for series ID: " + targetEvent.getSeriesId());
         }else{
+            System.out.println("DEBUG: No series ID found, deleting single event with ID: " + id);
             repository.deleteById(id);
         }
     }

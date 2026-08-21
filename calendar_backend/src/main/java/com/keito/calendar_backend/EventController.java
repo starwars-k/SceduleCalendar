@@ -26,6 +26,7 @@ public class EventController {
             eventsToSave.add(repository.save(event));
             return eventsToSave;
         }
+        String seriesId = UUID.randomUUID().toString();
         LocalDateTime currentStartTime = event.getStartTime();
         LocalDateTime currentEndTime = event.getEndTime();
         LocalDateTime repeatEndOn = event.getRepeatEndOn();
@@ -46,6 +47,7 @@ public class EventController {
                 true
             );
             repeatedEvent.setRepeatType(repeatType);
+            repeatedEvent.setSeriesId(seriesId);
             eventsToSave.add(repeatedEvent);
 
             if("Daily".equalsIgnoreCase(repeatType)){
@@ -74,6 +76,20 @@ public class EventController {
     @DeleteMapping("/{id}")
     public void deleteEvent(@PathVariable Long id){
         repository.deleteById(id);
+    }
+
+    @DeleteMapping("/future/{id}")
+    public void deleteFutureEvents(@PathVariable Long id){
+        DailyEvent targetEvent = repository.findById(id).orElse(null);
+        if(targetEvent != null) return;
+        if(targetEvent.getSeriesId() != null){
+            repository.deleteBySeriesIdAndStartTimeGreaterThanEqual(
+                targetEvent.getSeriesId(), 
+                targetEvent.getStartTime()
+            );
+        }else{
+            repository.deleteById(id);
+        }
     }
 
     @PutMapping("/{id}")

@@ -15,14 +15,16 @@ public class CalendarBackendApplication {
 	@Bean
 	CommandLineRunner initDatabase(EventRepository repository) {
 		return args -> {
-			LocalDateTime startDateTime = LocalDateTime.of(2026, 3, 29,21,0);
-			DailyEvent testEvent = new DailyEvent("Project Start",
-				"",
-				startDateTime,
-				startDateTime.plusHours(1),
-				"Task",
-				false
-			);
+			if(repository.count() == 0) {
+				LocalDateTime startDateTime = LocalDateTime.of(2026, 3, 29,21,0);
+				DailyEvent testEvent = new DailyEvent("Project Start",
+					"",
+					startDateTime,
+					startDateTime.plusHours(1),
+					"Task",
+					false,
+					false
+			);}
 			repository.save(testEvent);
 			System.out.println(">>> Sample Event Saved to Database!");
 		};

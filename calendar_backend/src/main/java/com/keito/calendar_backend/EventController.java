@@ -82,7 +82,7 @@ public class EventController {
     @DeleteMapping("/future/{id}")
     public void deleteFutureEvents(@PathVariable Long id){
         DailyEvent targetEvent = repository.findById(id).orElse(null);
-        if(targetEvent != null) return;
+        if(targetEvent == null) return;
         System.out.println("DEBUG: Target Event Series ID: " + targetEvent.getId());
         System.out.println("DEBUG: Target Event Start Time: " + targetEvent.getSeriesId());
         System.out.println("DEBUG: Target Event End Time: " + targetEvent.getStartTime());

@@ -71,6 +71,7 @@ public class EventController {
         return repository.saveAll(eventsToSave);
     }
         
+    @DeleteMapping("/{id}")
     public void deleteEvent(@PathVariable Long id){
         repository.deleteById(id);
     }

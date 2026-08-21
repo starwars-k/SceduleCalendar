@@ -29,6 +29,7 @@ public class EventController {
         LocalDateTime currentStartTime = event.getStartTime();
         LocalDateTime currentEndTime = event.getEndTime();
         LocalDateTime repeatEndOn = event.getRepeatEndOn();
+        String repeatType = event.getRepeatType();
         int maxCount = 1000; // Limit to prevent infinite loops
         for(int i = 0; i < maxCount; i++){
             if(repeatEndOn != null && currentStartTime.isAfter(repeatEndOn)){
@@ -43,33 +44,27 @@ public class EventController {
                 event.getIsAllDay(),
                 true
             );
-            repeatedEvent.setRepeatType(event.getRepeatType());
+            repeatedEvent.setRepeatType(repeatType);
             eventsToSave.add(repeatedEvent);
 
-            switch(event.getRepeatType().toLowerCase()){
-                case "daily":
-                    currentStartTime = currentStartTime.plusDays(1);
-                    currentEndTime = currentEndTime.plusDays(1);
-                    break;
-                case "weekly":
-                    currentStartTime = currentStartTime.plusWeeks(1);
-                    currentEndTime = currentEndTime.plusWeeks(1);
-                    break;
-                case "biweekly":
-                    currentStartTime = currentStartTime.plusWeeks(2);
-                    currentEndTime = currentEndTime.plusWeeks(2);
-                    break;
-                case "monthly":
-                    currentStartTime = currentStartTime.plusMonths(1);
-                    currentEndTime = currentEndTime.plusMonths(1);
-                    break;
-                case "yearly":
-                    currentStartTime = currentStartTime.plusYears(1);
-                    currentEndTime = currentEndTime.plusYears(1);
-                    break;
-                default:
-                    i = maxCount;
-                    break;
+            if("Daily".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusDays(1);
+                currentEndTime = currentEndTime.plusDays(1);
+            }else if("Weekly".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusWeeks(1);
+                currentEndTime = currentEndTime.plusWeeks(1);
+            }else if("Biweekly".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusWeeks(2);
+                currentEndTime = currentEndTime.plusWeeks(2);
+            }else if("monthly".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusMonths(1);
+                currentEndTime = currentEndTime.plusMonths(1);
+                break;
+            }else if("yearly".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusYears(1);
+                currentEndTime = currentEndTime.plusYears(1);
+            }else{
+                break;
             }
         }
         return repository.saveAll(eventsToSave);
@@ -82,15 +77,18 @@ public class EventController {
     @PutMapping("/{id}")
     public DailyEvent updateEvent(@PathVariable Long id, @RequestBody DailyEvent updatedEvent){
         return repository.findById(id)
-            .map(event -> {
-                event.setTitle(updatedEvent.getTitle());
-                event.setDescription(updatedEvent.getDescription());
-                event.setStartTime(updatedEvent.getStartTime());
-                event.setEndTime(updatedEvent.getEndTime());
-                event.setEventType(updatedEvent.getEventType());
-                event.setIsAllDay(updatedEvent.getIsAllDay());
-                event.setIsRepeating(updatedEvent.getIsRepeating());
-                return repository.save(event);
+            .map(existingEvent -> {
+                existingEvent.setTitle(updatedEvent.getTitle());
+                existingEvent.setDescription(updatedEvent.getDescription());
+                existingEvent.setStartTime(updatedEvent.getStartTime());
+                existingEvent.setEndTime(updatedEvent.getEndTime());
+                existingEvent.setEventType(updatedEvent.getEventType());
+                existingEvent.setIsAllDay(updatedEvent.getIsAllDay());
+                existingEvent.setIsRepeating(updatedEvent.getIsRepeating());
+                existingEvent.setRepeatType(updatedEvent.getRepeatType());
+                existingEvent.setRepeatEndOn(updatedEvent.getRepeatEndOn());
+                existingEvent.setEndOn(updatedEvent.getEndOn());
+                return repository.save(existingEvent);
             })
             .orElseGet(() -> {
                 updatedEvent.setId(id);

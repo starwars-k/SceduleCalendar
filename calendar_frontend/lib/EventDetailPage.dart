@@ -77,7 +77,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
       print("Error: Event ID is null. Cannot update.");
       return;
     }
-
     try{
       final response = await http.put(
         //Uri.parse('http://localhost:8080/api/events/${widget.event.id}'),
@@ -140,6 +139,97 @@ class _EventDetailPageState extends State<EventDetailPage> {
     });
   }
 
+  Future<void> _deleteSingleEvent() async {
+    try{
+      final response = await http.delete(
+        //Uri.parse('http://localhost:8080/api/events/${widget.event.id}'),
+        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/${widget.event.id}'), // Use the deployed backend URL
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        widget.onDelete(widget.event.id!);
+        Navigator.pop(context);
+        Navigator.pop(context);
+      } else {
+        print("Failed to delete event: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Connection Error: $e");
+    }
+  }
+
+  Future<void> _deleteFutureEvents() async {
+    try{
+      final response = await http.delete(
+        //Uri.parse('http://localhost:8080/api/events/${widget.event.id}'),
+        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/future/${widget.event.id}'), // Use the deployed backend URL
+        );
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          widget.onDelete(widget.event.id!);
+          Navigator.pop(context);
+          Navigator.pop(context);
+        } else {
+          print("Failed to delete future events: ${response.statusCode}");
+        }
+      } catch (e) {
+        print("Connection Error: $e");
+      }
+    }
+
+    void _onDeleteButtonPressed(){
+      bool isSeriesEvent = widget.event.isRepeating == true && widget.event.seriesId != null;
+      if(isSeriesEvent){
+        showDialog(
+          context: context,
+          builder: (BuildContext context){
+            return AlertDialog(
+              title: const Text("Delete Event"),
+              actions: [
+                TextButton(
+                  onPressed: (){
+                    Navigator.pop(context);
+                    _deleteSingleEvent();
+                  },
+                  child: const Text("Delete this event only", style: TextStyle(color: Colors.red)),
+                ),
+                TextButton(
+                  onPressed: (){
+                    Navigator.pop(context);
+                    _deleteFutureEvents();
+                  },
+                  child: const Text("Delete all future events", style: TextStyle(color: Colors.red)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context){
+            return AlertDialog(
+              title: const Text("Delete Event"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: (){
+                    Navigator.pop(context);
+                    _deleteSingleEvent();
+                  },
+                  child: const Text("Delete", style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,31 +244,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ),
           IconButton(
             icon: Icon(Icons.delete, size: 28, color: Colors.red.shade400),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context){
-                  return AlertDialog(
-                    title: const Text("Delete this"),
-                    content: Text("Are you sure you want to delete ${widget.event.title}?"),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancel"),
-                      ),
-                      TextButton(
-                        onPressed: (){
-                          widget.onDelete(widget.event.id!);
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                        },
-                        child: const Text("Delete", style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
-                  );
-                },
-              );
-            }
+            onPressed: _onDeleteButtonPressed,
           ),
         ],
       ),

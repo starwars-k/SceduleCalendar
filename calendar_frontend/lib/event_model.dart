@@ -5,8 +5,13 @@ class DailyEvent{
   final DateTime startTime;
   final DateTime endTime;
   final String eventType;
-  final String? repeatType;
   final bool isAllDay;
+  final bool isRepeating;
+  final String? repeatType;
+  final DateTime? repeatEndOn;
+  final DateTime? endOn;
+  final String? seriesId;
+
   DailyEvent({
     this.id, 
     required this.title, 
@@ -16,6 +21,10 @@ class DailyEvent{
     required this.eventType,
     required this.repeatType,
     required this.isAllDay,
+    required this.isRepeating,
+    this.repeatEndOn,
+    this.endOn,
+    this.seriesId,
   });
 
   factory DailyEvent.fromJson(Map<String, dynamic> json){
@@ -36,6 +45,14 @@ class DailyEvent{
       eventType: rawType?.toString() ?? 'Unknown',
       repeatType: json['repeatType']?.toString(),
       isAllDay: json['isAllDay'] ?? false,
+      isRepeating: json['isRepeating'] ?? false,
+      repeatEndOn: json['repeatEndOn'] != null
+        ? DateTime.parse(json['repeatEndOn'].toString())
+        : null,
+      endOn: json['endOn'] != null
+        ? DateTime.parse(json['endOn'].toString())
+        : null,
+      seriesId: json['seriesId']?.toString(), 
     );
   }
 }

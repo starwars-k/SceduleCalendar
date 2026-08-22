@@ -8,12 +8,14 @@ class EventDetailPage extends StatefulWidget {
   final DailyEvent event;
   final Function() onUpdate;
   final Function(int) onDelete;
+  final Function() onEdit;
 
   const EventDetailPage({
     super.key, 
     required this.event, 
     required this.onDelete,
     required this.onUpdate,
+    required this.onEdit,
   });
 
   @override
@@ -237,8 +239,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.check, size: 28, color: Colors.blue),
-            onPressed: _manualSave,
+            icon: const Icon(Icons.edit, size: 28, color: Colors.green),
+            onPressed: widget.onEdit,
           ),
           IconButton(
             icon: Icon(Icons.delete, size: 28, color: Colors.red.shade400),

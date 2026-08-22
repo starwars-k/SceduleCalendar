@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:calendar_frontend/event_model.dart'; // The event model class
 import 'package:intl/intl.dart';
 import 'package:calendar_frontend/EventDetailPage.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart'; // For LocalDateTime
 
 void main() => runApp(const MaterialApp(home: CalendarPage()));
 
@@ -103,7 +103,7 @@ class _CalendarPageState extends State<CalendarPage> {
             child: Scaffold(
               backgroundColor: Colors.transparent, // Make the background transparent
               appBar: AppBar(
-                title: const Text("Add New Event"),
+                title: Text(isEditing? "Edit Event" : "Add New Event"),
                 automaticallyImplyLeading: false, // Remove the default back button
                 backgroundColor: Colors.transparent, // Make the AppBar transparent
                 elevation: 0, // Remove shadow
@@ -627,102 +627,121 @@ class _CalendarPageState extends State<CalendarPage> {
       appBar: AppBar(
         title: const Text('Schedule Calendar'),
       ),
-      body: Column(
-        children: [
-          TableCalendar(
-            firstDay: DateTime.utc(2000, 1, 1),
-            lastDay: DateTime.utc(2100, 12, 31),
-            focusedDay: _focusedDay,
-            calendarFormat: _calendarFormat,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            eventLoader: (day){
-                final dayStart = DateTime(day.year, day.month, day.day, 0, 0, 0);
-                final dayEnd = DateTime(day.year, day.month, day.day, 23, 59, 59);
-                return _events.where((event) => event.startTime.isBefore(dayEnd) && event.endTime.isAfter(dayStart)).toList();
-            },
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay; // update `_focusedDay` here as well
-              });
-            },
-            onFormatChanged: (format) {
-              setState(() {
-                _calendarFormat = format;
-              });
-            },
-            calendarBuilders: CalendarBuilders(
-              markerBuilder: (context, date, events) {
-                if (events.isEmpty) return const SizedBox();
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: events.take(3).map((event){
-                    final dailyEvent = event as DailyEvent;
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 0.5),
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _getEventColor(dailyEvent.eventType),
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-            headerStyle: const HeaderStyle(
-              formatButtonVisible: false,
-              titleCentered: true,
-            ),
-            onHeaderTapped: (focusedDay) async{
-              final DateTime? picked = await showDatePicker(
-                context: context,
-                initialDate: focusedDay,
-                firstDate: DateTime(2000, 1, 1),
-                lastDate: DateTime(2100, 12, 31),
-              );
-              if(picked != null){
-                setState((){
-                  _focusedDay = picked;
-                  _selectedDay = picked;
-                });
-              }
-            },
-          ),
-          const SizedBox(height: 8.0),
-          Expanded(
-            child: _isLoading ? const Center(
-              child: CircularProgressIndicator(),
-            )
-            : ListView.builder(
-              itemCount: _selectedEvents.length,
-              itemBuilder: (context, index) {
-                final event = _selectedEvents[index];
-                return ListTile(
-                  leading: Icon(Icons.event, color: _getEventColor(event.eventType)),
-                  title: Text(event.title),
-                  subtitle: Text(
-                    event.isAllDay
-                      ? "All-Day"
-                      :"${DateFormat('MMM d, HH:mm').format(event.startTime)} - ${DateFormat('MMM d, HH:mm').format(event.endTime)}",
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EventDetailPage(
-                          event: event, 
-                          onDelete: (id) => _deleteEvent(id), 
-                          onUpdate: () => fetchEventsFromJava()
-                        ),
-                      )
+      body: Stack(
+        children:[
+          Column(
+            children: [
+              TableCalendar(
+                firstDay: DateTime(2000,1,1),
+                lastDay: DateTime(2100, 12, 31),
+                focusedDay: _focusedDay,
+                calendarFormat: _calendarFormat,
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                eventLoader: (day){
+                    final dayStart = DateTime(day.year, day.month, day.day, 0, 0, 0);
+                    final dayEnd = DateTime(day.year, day.month, day.day, 23, 59, 59);
+                    return _events.where((event) => event.startTime.isBefore(dayEnd) && event.endTime.isAfter(dayStart)).toList();
+                },
+                onDaySelected: (selectedDay, focusedDay) {
+                  setState(() {
+                    _selectedDay = selectedDay;
+                    _focusedDay = focusedDay; // update `_focusedDay` here as well
+                  });
+                },
+                onFormatChanged: (format) {
+                  setState(() {
+                    _calendarFormat = format;
+                  });
+                },
+                calendarBuilders: CalendarBuilders(
+                  markerBuilder: (context, date, events) {
+                    if (events.isEmpty) return const SizedBox();
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: events.take(3).map((event){
+                        final dailyEvent = event as DailyEvent;
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 0.5),
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _getEventColor(dailyEvent.eventType),
+                          ),
+                        );
+                      }).toList(),
                     );
                   },
-                );
-              },
-            ),
+                ),
+                headerStyle: const HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                ),
+                onHeaderTapped: (focusedDay) async{
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: focusedDay,
+                    firstDate: DateTime(2000, 1, 1),
+                    lastDate: DateTime(2100, 12, 31),
+                  );
+                  if(picked != null){
+                    setState((){
+                      _focusedDay = picked;
+                      _selectedDay = picked;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 8.0),
+              Expanded(
+                child: _isLoading ? const Center(
+                  child: CircularProgressIndicator(),
+                )
+                : ListView.builder(
+                  itemCount: _selectedEvents.length,
+                  itemBuilder: (context, index) {
+                    final event = _selectedEvents[index];
+                    return ListTile(
+                      leading: Icon(Icons.event, color: _getEventColor(event.eventType)),
+                      title: Text(event.title),
+                      subtitle: Text(
+                        event.isAllDay
+                          ? "All-Day"
+                          :"${DateFormat('MMM d, HH:mm').format(event.startTime)} - ${DateFormat('MMM d, HH:mm').format(event.endTime)}",
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EventDetailPage(
+                              event: event, 
+                              onDelete: (id) => _deleteEvent(id), 
+                              onUpdate: () => fetchEventsFromJava(),
+                              onEdit: (){
+                                Navigator.pop(context); // Close the detail page first
+                                _showAddEventDialog(
+                                  context, 
+                                  event.startTime, 
+                                  eventToEdit: event
+                                );
+                              }
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
+          if(_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

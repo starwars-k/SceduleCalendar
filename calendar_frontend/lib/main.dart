@@ -6,7 +6,6 @@ import 'package:calendar_frontend/event_model.dart'; // The event model class
 import 'package:intl/intl.dart';
 import 'package:calendar_frontend/EventDetailPage.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 void main() => runApp(const MaterialApp(home: CalendarPage()));
 
@@ -21,7 +20,7 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _memoController = TextEditingController();
-  String _selectedType = 'Task'; //Default event type
+  String _eventType = 'Task'; //Default event type
   String _repeatType = 'Daily'; // Default repeat type
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
@@ -69,18 +68,19 @@ class _CalendarPageState extends State<CalendarPage> {
     fetchEventsFromJava();// Load datafrom backend immediately
   }
 
-  void _showAddEventDialog(BuildContext context, DateTime initialDate){
-    _titleController.clear();
-    _isAllDay = false; // Reset all-day checkbox
-    _startTime = DateTime(initialDate.year, initialDate.month, initialDate.day, DateTime.now().hour); // Default start time at current time
-    _endTime = _startTime.add(const Duration(hours: 1)); // Default end time
-    _isRepeating = false; // Reset repeating checkbox
-    _repeatType = 'None'; // Reset repeat type when opening the dialog
+  void _showAddEventDialog(BuildContext context, DateTime initialDate, {DailyEvent? eventToEdit}){
+    final bool isEditing = eventToEdit != null;
+    _titleController.text = isEditing ? eventToEdit.title : '';
+    _isAllDay = isEditing ? eventToEdit.isAllDay : false; // Reset all-day checkbox
+    _startTime = isEditing ? eventToEdit.startTime : DateTime(initialDate.year, initialDate.month, initialDate.day, DateTime.now().hour); // Default start time at current time
+    _endTime = isEditing ? eventToEdit.endTime : _startTime.add(const Duration(hours: 1)); // Default end time
+    _isRepeating = isEditing ? eventToEdit.isRepeating : false; // Reset repeating checkbox
+    _repeatType = isEditing && eventToEdit.repeatType != null ? eventToEdit.repeatType! : 'None'; // Reset repeat type when opening the dialog
     _repeatOptions.contains(_repeatType) ? _repeatType : 'Daily'; // Reset repeat type to default if not in list
-    _endOn = false; // Reset end on checkbox
-    _repeatEndDate = initialDate.add(const Duration(days: 1)); // Reset repeat
-    _memoController.clear();
-    _selectedType = 'Task'; // Reset event type to default if not in list
+    _endOn = isEditing ? (eventToEdit.repeatEndOn != null) : false; // Reset end on checkbox
+    _repeatEndDate = isEditing && eventToEdit.repeatEndOn != null ? eventToEdit.repeatEndOn! : initialDate.add(const Duration(days: 1)); // Reset repeat end date
+    _memoController.text = isEditing ? eventToEdit.description : '';
+    _eventType =  isEditing ? eventToEdit.eventType : 'Task'; // Reset event type to default if not in list
 
     final ScrollController modalScrollController = ScrollController();
     showModalBottomSheet(
@@ -333,7 +333,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       const SizedBox(height: 15),
                       // 11. Event Type Dropdown
                       DropdownButtonFormField<String>(
-                        initialValue: _selectedType,
+                        initialValue: _eventType,
                         decoration: const InputDecoration(labelText: "Event Type", prefixIcon: Icon(Icons.category), border: OutlineInputBorder()),
                         items: _eventTypes.map((String type){
                           return DropdownMenuItem<String>(
@@ -343,7 +343,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         }).toList(),
                         onChanged: (String? newValue){
                           setDialogState(() {
-                            _selectedType = newValue!;
+                            _eventType = newValue!;
                           });
                         },
                       ),
@@ -358,14 +358,18 @@ class _CalendarPageState extends State<CalendarPage> {
                           ElevatedButton(
                             onPressed: () {
                               if(_titleController.text.isNotEmpty){
-                                _saveBatchEvents(_startTime, _endTime);
+                                if(!isEditing && eventToEdit != null && eventToEdit.id != null){
+                                  _updateEvent(eventToEdit.id!, _startTime, _endTime);
+                                }else{
+                                  _saveBatchEvents(_startTime, _endTime);
+                                }
                               }else{
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text("Event title cannot be empty!"))
                                 );
                               }
                             },
-                            child: const Text("Save"),
+                            child: Text(isEditing ? "Update" : "Save"),
                           ),
                         ],
                       )
@@ -426,6 +430,7 @@ class _CalendarPageState extends State<CalendarPage> {
         final response = await http.get(Uri.parse('https://calendar-backend-qhny.onrender.com/api/events')); // Use the deployed backend URL
       if (response.statusCode == 200) {
         List<dynamic> body = jsonDecode(response.body);
+        if(!mounted) return; // Check if the widget is still mounted before calling setState
         setState(() {
           _events = body.map((dynamic item) => DailyEvent.fromJson(item)).cast<DailyEvent>().toList();
         });
@@ -484,6 +489,7 @@ class _CalendarPageState extends State<CalendarPage> {
     String ms = (dateTime.millisecond).toString().padLeft(3, '0');// Ensure milliseconds are always 3 digits
     return '$base.$ms';
   }
+
   Future<void> _saveBatchEvents(DateTime startTime, DateTime endTime) async {
     try{
       final Map<String, dynamic> eventData ={
@@ -491,7 +497,7 @@ class _CalendarPageState extends State<CalendarPage> {
         'description': _memoController.text,
         'startTime': _formatToBackendIso(startTime),
         'endTime': _formatToBackendIso(endTime),
-        'eventType': _selectedType,
+        'eventType': _eventType,
         'isAllDay': _isAllDay,
         'isRepeating': _isRepeating,
         'repeatType': _isRepeating ? _repeatType : 'None',
@@ -516,6 +522,42 @@ class _CalendarPageState extends State<CalendarPage> {
       }
     }catch(e){
       print("EXCEPTION caught while saving batch events: $e");
+    }
+  }
+
+  Future<void> _updateEvent(int id, DateTime startTime, DateTime endTime) async {
+    try{
+      final Map<String, dynamic> eventData = {
+        'title': _titleController.text,
+        'description': _memoController.text,
+        'startTime': _formatToBackendIso(startTime),
+        'endTime': _formatToBackendIso(endTime),
+        'eventType': _eventType,
+        'isAllDay': _isAllDay,
+        'isRepeating': _isRepeating,
+        'repeatType': _isRepeating ? _repeatType : 'None',
+        'endOn': _isRepeating ? _endOn : false,
+        'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
+      };
+
+      print("Updating event with ID $id: $eventData");
+
+      final response = await http.put(
+        //Uri.parse('http://localhost:8080/api/events/$id'),
+        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(eventData),
+      );
+      if(response.statusCode == 200 || response.statusCode == 204){
+        if(!mounted) return; // Check if the widget is still mounted before calling setState
+        fetchEventsFromJava(); // Refresh the event list after updating
+        Navigator.pop(context);
+      }else{
+        print("Failed to update event. Status code: ${response.statusCode}");
+        print("Response body: ${response.body}");
+      }
+    }catch(e){
+      print("EXCEPTION caught while updating event: $e");
     }
   }
 

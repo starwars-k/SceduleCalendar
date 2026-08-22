@@ -163,17 +163,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
       final response = await http.delete(
         //Uri.parse('http://localhost:8080/api/events/${widget.event.id}'),
         Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/future/${widget.event.id}'), // Use the deployed backend URL
-        );
-        if (response.statusCode == 200 || response.statusCode == 204) {
-          widget.onDelete(widget.event.id!);
-          Navigator.pop(context);
-        } else {
-          print("Failed to delete future events: ${response.statusCode}");
-        }
-      } catch (e) {
-        print("Connection Error: $e");
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        widget.onDelete(widget.event.id!);
+        Navigator.pop(context);
+      } else {
+        print("Failed to delete future events: ${response.statusCode}");
       }
+    }catch (e) {
+      print("Connection Error: $e");
     }
+  }
 
     void _onDeleteButtonPressed(){
       bool isSeriesEvent = widget.event.isRepeating == true && widget.event.seriesId != null;
@@ -227,8 +227,36 @@ class _EventDetailPageState extends State<EventDetailPage> {
               ],
             );
           },
+        );
+      }
+    }
+
+  Widget _buildTimeWidget(){
+    bool isSameDay = widget.event.startTime.year == widget.event.endTime.year &&
+      widget.event.startTime.month == widget.event.endTime.month &&
+      widget.event.startTime.day == widget.event.endTime.day;
+    if(isSameDay){
+      Text(
+        widget.event.isAllDay
+          ? "All-Day Event"
+          : "${DateFormat('YYYY-MM-dd').format(widget.event.startTime)}",
+        style: const TextStyle(fontSize: 16),
+      );
+      Text(
+        widget.event.isAllDay
+          ? "All-Day Event"
+          : "${DateFormat('HH:mm').format(widget.event.startTime)} - ${DateFormat('HH:mm').format(widget.event.endTime)}",
+        style: const TextStyle(fontSize: 16),
+      );
+    }else if(isSameDay){
+      Text(
+        widget.event.isAllDay
+          ? "All-Day Event"
+          : "Start:${DateFormat('YYYY-MM-dd-HH:mm').format(widget.event.startTime)} - ${DateFormat('YYYY-MM-dd-HH:mm').format(widget.event.endTime)}",
+        style: const TextStyle(fontSize: 16),
       );
     }
+    return const SizedBox.shrink();
   }
 
   @override
@@ -252,53 +280,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
         padding: const EdgeInsets.all(16),
         children: [
           // 1. Title
-          TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(labelText: "Title", border: OutlineInputBorder()),
+          Text(
+            widget.event.title,
+            style: const TextStyle(fontSize: 20),
           ),
+          const Divider(),
           const SizedBox(height: 20),
-          const Text("Schedule", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          // 2. All-Day Checkbox
-          CheckboxListTile(
-            title: const Text("All-Day Event"),
-            value: _isAllDay,
-            onChanged: (bool? value) {
-              setState(() {
-                _isAllDay = value ?? false;
-              });
-            },
-          ),
-          if(!_isAllDay)ListTile(
-            title : Text("Start Time: ${_startTime.hour}:${_startTime.minute.toString().padLeft(2,'0')}"),
-            trailing: const Icon(Icons.edit),
-            onTap: () async{
-              final time = await showTimePicker(
-                context: context,
-                initialTime: TimeOfDay.fromDateTime(_startTime),
-              );
-              if(time != null){
-                setState(() {
-                  _startTime = DateTime(_startTime.year, _startTime.month, _startTime.day, time.hour, time.minute);
-                });
-              }
-            },
-          ),
-          if(!_isAllDay)ListTile(
-            title : Text("End Time: ${_endTime.hour}:${_endTime.minute.toString().padLeft(2,'0')}"),
-            trailing: const Icon(Icons.edit),
-            onTap: () async{
-              final time = await showTimePicker(
-                context: context,
-                initialTime: TimeOfDay.fromDateTime(_endTime),
-              );
-              if(time != null){
-                setState(() {
-                  _endTime = DateTime(_endTime.year, _endTime.month, _endTime.day, time.hour, time.minute);
-                });
-              }
-            },
-          ),
+          
+          //2. Time
+          _buildTimeWidget(),
           const SizedBox(height: 20),
+            // 2. Event Type
+          ListTile(
+            title : Text("Event Type"),
+            subtitle: Text(widget.event.eventType),
+          ),
           Row(
             // 5. Repeat Checkbox
             children: [
@@ -321,60 +317,6 @@ class _EventDetailPageState extends State<EventDetailPage> {
             ],
           ),
           const SizedBox(height: 20),
-          // 6. Repeat Type Dropdown (only visible if repeating)
-          if(_isRepeating) ...[
-            DropdownButtonFormField<String>(
-              value: _repeatType == 'None' ? 'Daily' : _repeatType, // Default to 'Daily' if 'None'
-              decoration: const InputDecoration(
-              labelText: "How often?",
-              border: OutlineInputBorder()
-            ),
-            items: ['Daily', 'Weekly', 'Biweekly', 'Monthly', 'Yearly'].map((option) =>
-            DropdownMenuItem<String>(
-              value: option,
-                              child: Text(option),
-                            )).toList(),
-                          onChanged: (value) => setState(() {
-                              _repeatType = value!;
-                          }),
-                        ),
-                      ],
-                      // 7. End On Checkbox (only visible if repeating)
-                      if(_isRepeating)...[
-                        Row(
-                          children:[
-                            Checkbox(
-                              value: _endOn,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  _endOn = value ?? false;
-                                });
-                              },
-                            ),
-                            const Text("Set an end date for repeating"),
-                          ]
-                        ),
-                      ],
-                      // 8. Repeat End Date Picker (only visible if repeating and endOn is true)
-                      if(_isRepeating && _endOn) ...[
-                        TextButton.icon(
-                          icon: const Icon(Icons.calendar_today),
-                          label: Text("The repeat finishes on: ${DateFormat('yyyy-MM-dd').format(_repeatEndDate)}"),
-                          onPressed: () async{
-                            final DateTime? picked = await showDatePicker(
-                              context: context,
-                              initialDate: _repeatEndDate,
-                              firstDate: DateTime(widget.event.startTime.year, widget.event.startTime.month, widget.event.startTime.day),
-                              lastDate: DateTime(2030),
-                            );
-                            if(picked != null){
-                              setState(() {
-                                _repeatEndDate = picked;
-                              });
-                            }
-                          },
-                        ),
-                      ],
           // 8. Memo
           TextField(
             controller: _memoController,
@@ -403,7 +345,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
               }
             },
           ),
-        ]            
+        ],
       ),
     );
   } 

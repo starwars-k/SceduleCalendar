@@ -17,7 +17,8 @@ public class CalendarBackendApplication {
 		return args -> {
 			if(repository.count() == 0) {
 				LocalDateTime startDateTime = LocalDateTime.of(2026, 3, 29,21,0);
-				DailyEvent testEvent = new DailyEvent("Project Start",
+				DailyEvent testEvent = new DailyEvent(
+					"Project Start",
 					"",
 					startDateTime,
 					startDateTime.plusHours(1),
@@ -25,8 +26,18 @@ public class CalendarBackendApplication {
 					false,
 					false
 				);
-			repository.save(testEvent);
-			System.out.println(">>> Sample Event Saved to Database!");
+				DailyEvent testEvent2 = new DailyEvent(
+					"Backend Upload on GitHub and RENDER",
+					"",
+					LocalDateTime.of(2026, 8, 20, 21, 0),
+					LocalDateTime.of(2026, 8, 20, 22, 0),
+					"Task",
+					true,
+					false
+				);
+				repository.save(testEvent);
+				repository.save(testEvent2);
+				System.out.println(">>> Sample Events Saved to Database!");
 			}
 		};
 	}

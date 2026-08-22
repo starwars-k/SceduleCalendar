@@ -29,6 +29,7 @@ class _CalendarPageState extends State<CalendarPage> {
   bool _isAllDay = false; // New variable to track if the event is all-day
   bool _showStartTimePicker = false; // New variable to track if the start time picker should be shown
   bool _showEndTimePicker = false; // New variable to track if the end time picker should be shown
+  bool _isLoading = false; // New variable to track if the app is loading data
   CalendarFormat _calendarFormat = CalendarFormat.month;
   List<DailyEvent> _events = [];
   List<DailyEvent> get _selectedEvents {
@@ -65,6 +66,7 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   void initState() {
     super.initState();
+    _isLoading = true; // Set loading state to true
     fetchEventsFromJava();// Load datafrom backend immediately
   }
 
@@ -437,6 +439,11 @@ class _CalendarPageState extends State<CalendarPage> {
       }
     }catch(e){
       print("FLUTTER ERROR: $e");
+    }finally{
+      if(!mounted) return; // Check if the widget is still mounted before calling setState
+      setState(() {
+        _isLoading = false; // Set loading state to false after fetching events
+      });
     }
   }
 
@@ -685,7 +692,10 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
           const SizedBox(height: 8.0),
           Expanded(
-            child: ListView.builder(
+            child: _isLoading ? const Center(
+              child: CircularProgressIndicator(),
+            )
+            : ListView.builder(
               itemCount: _selectedEvents.length,
               itemBuilder: (context, index) {
                 final event = _selectedEvents[index];
@@ -706,7 +716,7 @@ class _CalendarPageState extends State<CalendarPage> {
                           onDelete: (id) => _deleteEvent(id), 
                           onUpdate: () => fetchEventsFromJava()
                         ),
-                      ),
+                      )
                     );
                   },
                 );

@@ -6,8 +6,33 @@ import 'package:calendar_frontend/event_model.dart'; // The event model class
 import 'package:intl/intl.dart';
 import 'package:calendar_frontend/EventDetailPage.dart';
 import 'package:flutter/cupertino.dart'; // For LocalDateTime
+import 'dart:async';
 
-void main() => runApp(const MaterialApp(home: CalendarPage()));
+final ValueNotifier<bool> globalLoading = ValueNotifier<bool>(false);
+void main() => runApp(
+  MaterialApp(
+    home: CalendarPage(),
+    builder:(context, child){
+      return Stack(
+        children: [
+          child!,
+          ValueListenableBuilder<bool>(
+            valueListenable: globalLoading,
+            builder: (context, isLoading, child){
+              if(!isLoading) return const SizedBox.shrink();
+              return Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                )
+              );
+            }
+          ),
+        ],
+      );
+    },
+  ),
+);
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -28,8 +53,7 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _endTime = DateTime.now().add(const Duration(hours: 1));
   bool _isAllDay = false; // New variable to track if the event is all-day
   bool _showStartTimePicker = false; // New variable to track if the start time picker should be shown
-  bool _showEndTimePicker = false; // New variable to track if the end time picker should be shown
-  bool _isLoading = false; // New variable to track if the app is loading data
+  bool _showEndTimePicker = false; // New variable to track if the end time picker should be shown 
   CalendarFormat _calendarFormat = CalendarFormat.month;
   List<DailyEvent> _events = [];
   List<DailyEvent> get _selectedEvents {
@@ -66,7 +90,6 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   void initState() {
     super.initState();
-    _isLoading = true; // Set loading state to true
     fetchEventsFromJava();// Load datafrom backend immediately
   }
 
@@ -442,7 +465,7 @@ class _CalendarPageState extends State<CalendarPage> {
     }finally{
       if(!mounted) return; // Check if the widget is still mounted before calling setState
       setState(() {
-        _isLoading = false; // Set loading state to false after fetching events
+        globalLoading.value = false; // Set loading state to false after fetching events
       });
     }
   }
@@ -475,20 +498,21 @@ class _CalendarPageState extends State<CalendarPage> {
   */
 
   Future<void> _deleteEvent(int id) async{
-    // print("Attempting to delete event with ID: $id");
-    try{
-      final response = await http.delete(
-        //Uri.parse('http://localhost:8080/api/events/$id'),
-        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
-      );
-      if(response.statusCode == 200 || response.statusCode == 201){
-        fetchEventsFromJava(); // Refresh the event list after deleting
-      }else{
-        print("Failed to delete event. Status code: ${response.statusCode}");
+    await showLoadingIfNeeded(() async{
+      try{
+        final response = await http.delete(
+          //Uri.parse('http://localhost:8080/api/events/$id'),
+          Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
+        );
+        if(response.statusCode == 200 || response.statusCode == 201){
+          fetchEventsFromJava(); // Refresh the event list after deleting
+        }else{
+          print("Failed to delete event. Status code: ${response.statusCode}");
+        }
+      }catch(e){
+        print("ERROR deleting event: $e");
       }
-    }catch(e){
-      print("ERROR deleting event: $e");
-    }
+    });
   }
 
   String _formatToBackendIso(DateTime dateTime){
@@ -498,74 +522,78 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Future<void> _saveBatchEvents(DateTime startTime, DateTime endTime) async {
-    try{
-      final Map<String, dynamic> eventData ={
-        'title': _titleController.text,
-        'description': _memoController.text,
-        'startTime': _formatToBackendIso(startTime),
-        'endTime': _formatToBackendIso(endTime),
-        'eventType': _eventType,
-        'isAllDay': _isAllDay,
-        'isRepeating': _isRepeating,
-        'repeatType': _isRepeating ? _repeatType : 'None',
-        'endOn': _isRepeating ? _endOn : false,
-        'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
-      };
+    await showLoadingIfNeeded(() async{
+      try{
+        final Map<String, dynamic> eventData ={
+          'title': _titleController.text,
+          'description': _memoController.text,
+          'startTime': _formatToBackendIso(startTime),
+          'endTime': _formatToBackendIso(endTime),
+          'eventType': _eventType,
+          'isAllDay': _isAllDay,
+          'isRepeating': _isRepeating,
+          'repeatType': _isRepeating ? _repeatType : 'None',
+          'endOn': _isRepeating ? _endOn : false,
+          'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
+        };
 
-      print("Sending event to server: $eventData");
+        print("Sending event to server: $eventData");
 
-      final response = await http.post(
-        //Uri.parse('http://localhost:8080/api/events/batch'),
-        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/'), // Use the deployed backend URL
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(eventData),
-      );
-      if(response.statusCode == 200 || response.statusCode == 201){
-        fetchEventsFromJava(); // Refresh the event list after batch saving
-        Navigator.pop(context);
-      }else{
-        print("Failed to save batch events. Status code: ${response.statusCode}");
-        print("Response body: ${response.body}");
+        final response = await http.post(
+          //Uri.parse('http://localhost:8080/api/events/batch'),
+          Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/'), // Use the deployed backend URL
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(eventData),
+        );
+        if(response.statusCode == 200 || response.statusCode == 201){
+          fetchEventsFromJava(); // Refresh the event list after batch saving
+          Navigator.pop(context);
+        }else{
+          print("Failed to save batch events. Status code: ${response.statusCode}");
+          print("Response body: ${response.body}");
+        }
+      }catch(e){
+        print("EXCEPTION caught while saving batch events: $e");
       }
-    }catch(e){
-      print("EXCEPTION caught while saving batch events: $e");
-    }
+    });
   }
 
   Future<void> _updateEvent(int id, DateTime startTime, DateTime endTime) async {
-    try{
-      final Map<String, dynamic> eventData = {
-        'title': _titleController.text,
-        'description': _memoController.text,
-        'startTime': _formatToBackendIso(startTime),
-        'endTime': _formatToBackendIso(endTime),
-        'eventType': _eventType,
-        'isAllDay': _isAllDay,
-        'isRepeating': _isRepeating,
-        'repeatType': _isRepeating ? _repeatType : 'None',
-        'endOn': _isRepeating ? _endOn : false,
-        'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
-      };
+    await showLoadingIfNeeded(() async{
+      try{
+        final Map<String, dynamic> eventData = {
+          'title': _titleController.text,
+          'description': _memoController.text,
+          'startTime': _formatToBackendIso(startTime),
+          'endTime': _formatToBackendIso(endTime),
+          'eventType': _eventType,
+          'isAllDay': _isAllDay,
+          'isRepeating': _isRepeating,
+          'repeatType': _isRepeating ? _repeatType : 'None',
+          'endOn': _isRepeating ? _endOn : false,
+          'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
+        };
 
-      print("Updating event with ID $id: $eventData");
+        print("Updating event with ID $id: $eventData");
 
-      final response = await http.put(
-        //Uri.parse('http://localhost:8080/api/events/$id'),
-        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(eventData),
-      );
-      if(response.statusCode == 200 || response.statusCode == 204){
-        if(!mounted) return; // Check if the widget is still mounted before calling setState
-        fetchEventsFromJava(); // Refresh the event list after updating
-        Navigator.pop(context);
-      }else{
-        print("Failed to update event. Status code: ${response.statusCode}");
-        print("Response body: ${response.body}");
+        final response = await http.put(
+          //Uri.parse('http://localhost:8080/api/events/$id'),
+          Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(eventData),
+        );
+        if(response.statusCode == 200 || response.statusCode == 204){
+          if(!mounted) return; // Check if the widget is still mounted before calling setState
+          fetchEventsFromJava(); // Refresh the event list after updating
+          Navigator.pop(context);
+        }else{
+          print("Failed to update event. Status code: ${response.statusCode}");
+          print("Response body: ${response.body}");
+        }
+      }catch(e){
+        print("EXCEPTION caught while updating event: $e");
       }
-    }catch(e){
-      print("EXCEPTION caught while updating event: $e");
-    }
+    });
   }
 
   //iOS style date picker for selecting the repeat end date
@@ -620,6 +648,23 @@ class _CalendarPageState extends State<CalendarPage> {
         );
       },
     );
+  }
+
+  Future<T> showLoadingIfNeeded<T>(Future<T> Function() task) async{
+    bool isShown = false;
+    Timer timer = Timer(const Duration(milliseconds: 100), (){
+      isShown = true;
+      globalLoading.value = true;
+    });
+    
+    try{
+      return await task();
+    }finally{
+      timer.cancel();
+      if(isShown){
+        globalLoading.value = false;
+      }
+    }
   }
 
   Widget build(BuildContext context) {
@@ -751,19 +796,13 @@ class _CalendarPageState extends State<CalendarPage> {
                   foregroundColor: Colors.blue,
                 ),
                 FloatingActionButton(
-                  onPressed: _isLoading ? null: () => _showAddEventDialog(context, _selectedDay),
+                  onPressed: globalLoading.value ? null: () => _showAddEventDialog(context, _selectedDay),
                   child: const Icon(Icons.add),
                 )
+
               ]
             )
           ),
-          if(_isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            )
         ],
       ),
     );

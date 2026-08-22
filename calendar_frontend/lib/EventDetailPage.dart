@@ -237,19 +237,19 @@ class _EventDetailPageState extends State<EventDetailPage> {
       widget.event.startTime.day == widget.event.endTime.day;
     if(widget.event.isAllDay&&isSameDay){
       return Text(
-        'All-Day Event${DateFormat('yyyy-MM-dd').format(widget.event.startTime)}'
+        '${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)}\nAll-Day'
       );
     }else if(widget.event.isAllDay){
       return Text(
-        'All-Day Event\n${DateFormat('yyyy-MM-dd').format(widget.event.startTime)} - ${DateFormat('yyyy-MM-dd').format(widget.event.endTime)}'
+        '${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)} - ${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.endTime)}\nAll-Day'
       );
     }else if(isSameDay){
       return Text(
-        '${DateFormat('yyyy-MM-dd').format(widget.event.startTime)}\n${DateFormat('HH:mm').format(widget.event.startTime)}-${DateFormat('HH:mm').format(widget.event.endTime)}'
+        '${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)}\n${DateFormat('HH:mm').format(widget.event.startTime)}-${DateFormat('HH:mm').format(widget.event.endTime)}'
       );
     }else{
       return Text(
-        'Start:${DateFormat('yyyy-MM-dd HH:mm').format(widget.event.startTime)}\nEnd:${DateFormat('yyyy-MM-dd HH:mm').format(widget.event.endTime)}'
+        'Start:${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)}\nEnd:${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.endTime)}'
       );
     }
   }

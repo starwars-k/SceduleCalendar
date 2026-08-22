@@ -23,7 +23,7 @@ public class CalendarBackendApplication {
 					startDateTime,
 					startDateTime.plusHours(1),
 					"Task",
-					false,
+					true,
 					false
 				);
 				DailyEvent testEvent2 = new DailyEvent(

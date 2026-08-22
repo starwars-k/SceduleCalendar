@@ -235,28 +235,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
     bool isSameDay = widget.event.startTime.year == widget.event.endTime.year &&
       widget.event.startTime.month == widget.event.endTime.month &&
       widget.event.startTime.day == widget.event.endTime.day;
-    if(isSameDay){
-      Text(
-        widget.event.isAllDay
-          ? "All-Day Event"
-          : "${DateFormat('YYYY-MM-dd').format(widget.event.startTime)}",
-        style: const TextStyle(fontSize: 16),
+    if(widget.event.isAllDay&&isSameDay){
+      return Text(
+        'All-Day Event${DateFormat('yyyy-MM-dd').format(widget.event.startTime)}'
       );
-      Text(
-        widget.event.isAllDay
-          ? "All-Day Event"
-          : "${DateFormat('HH:mm').format(widget.event.startTime)} - ${DateFormat('HH:mm').format(widget.event.endTime)}",
-        style: const TextStyle(fontSize: 16),
+    }else if(widget.event.isAllDay){
+      return Text(
+        'All-Day Event\n${DateFormat('yyyy-MM-dd').format(widget.event.startTime)} - ${DateFormat('yyyy-MM-dd').format(widget.event.endTime)}'
       );
     }else if(isSameDay){
-      Text(
-        widget.event.isAllDay
-          ? "All-Day Event"
-          : "Start:${DateFormat('YYYY-MM-dd-HH:mm').format(widget.event.startTime)} - ${DateFormat('YYYY-MM-dd-HH:mm').format(widget.event.endTime)}",
-        style: const TextStyle(fontSize: 16),
+      return Text(
+        '${DateFormat('yyyy-MM-dd').format(widget.event.startTime)}\n${DateFormat('HH:mm').format(widget.event.startTime)}-${DateFormat('HH:mm').format(widget.event.endTime)}'
+      );
+    }else{
+      return Text(
+        'Start:${DateFormat('yyyy-MM-dd HH:mm').format(widget.event.startTime)}\nEnd:${DateFormat('yyyy-MM-dd HH:mm').format(widget.event.endTime)}'
       );
     }
-    return const SizedBox.shrink();
   }
 
   @override
@@ -282,59 +277,25 @@ class _EventDetailPageState extends State<EventDetailPage> {
           // 1. Title
           Text(
             widget.event.title,
-            style: const TextStyle(fontSize: 20),
           ),
           const Divider(),
           const SizedBox(height: 20),
           
           //2. Time
           _buildTimeWidget(),
+          
           const SizedBox(height: 20),
-            // 2. Event Type
-          ListTile(
-            title : Text("Event Type"),
-            subtitle: Text(widget.event.eventType),
-          ),
-          Row(
-            // 5. Repeat Checkbox
-            children: [
-              Expanded(
-                child: CheckboxListTile(
-                  title: const Text("Repeating"),
-                  value: _isRepeating,
-                  onChanged: (bool? value) {
-                    setState(() {
-                      _isRepeating = value ?? false;
-                      if(_isRepeating && _repeatType == 'None'){
-                        _repeatType = 'Daily';
-                      }else if(!_isRepeating){
-                        _repeatType = 'None';
-                      }
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // 8. Memo
-          TextField(
-            controller: _memoController,
-            decoration: const InputDecoration(
-              labelText: "Memo", 
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 1,
-          ),
-          const SizedBox(height: 20),
-          // 9. Event Type Dropdown
+          // 8. Event Type Dropdown
           DropdownButtonFormField<String>(
             value: widget.event.eventType.isNotEmpty ? widget.event.eventType : _types.first,
             decoration: const InputDecoration(labelText: "Event Type", border: OutlineInputBorder()),
             items: _types.map((String type){
               return DropdownMenuItem<String>(
                 value: type, 
-                child: Text(type),
+                child: Text(
+                  type,
+                  selectionColor: Colors.grey
+                ),
               );
             }).toList(),
             onChanged: (String? newValue){
@@ -345,6 +306,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
               }
             },
           ),
+          const SizedBox(height: 20),
+          // 9. Memo
+          TextField(
+            controller: _memoController,
+            decoration: const InputDecoration(
+              labelText: "Memo", 
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 1,
+          ),
+
         ],
       ),
     );

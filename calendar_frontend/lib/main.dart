@@ -694,10 +694,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               const SizedBox(height: 8.0),
               Expanded(
-                child: _isLoading ? const Center(
-                  child: CircularProgressIndicator(),
-                )
-                : ListView.builder(
+                child: ListView.builder(
                   itemCount: _selectedEvents.length,
                   itemBuilder: (context, index) {
                     final event = _selectedEvents[index];
@@ -718,7 +715,6 @@ class _CalendarPageState extends State<CalendarPage> {
                               onDelete: (id) => _deleteEvent(id), 
                               onUpdate: () => fetchEventsFromJava(),
                               onEdit: (){
-                                Navigator.pop(context); // Close the detail page first
                                 _showAddEventDialog(
                                   context, 
                                   event.startTime, 
@@ -735,6 +731,32 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             ],
           ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 30,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children:[
+                FloatingActionButton.extended(
+                  onPressed: () {
+                    setState((){
+                      _focusedDay = DateTime.now();
+                      _selectedDay = DateTime.now();
+                    });
+                  },
+                  label: const Text("TODAY"),
+                  icon: const Icon(Icons.today),
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.blue,
+                ),
+                FloatingActionButton(
+                  onPressed: _isLoading ? null: () => _showAddEventDialog(context, _selectedDay),
+                  child: const Icon(Icons.add),
+                )
+              ]
+            )
+          ),
           if(_isLoading)
             Container(
               color: Colors.black.withOpacity(0.5),
@@ -743,31 +765,6 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             )
         ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children:[
-            FloatingActionButton.extended(
-              onPressed: () {
-                setState((){
-                  _focusedDay = DateTime.now();
-                  _selectedDay = DateTime.now();
-                });
-              },
-              label: const Text("TODAY"),
-              icon: const Icon(Icons.today),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.blue,
-            ),
-            FloatingActionButton(
-              onPressed: () => _showAddEventDialog(context, _selectedDay),
-              child: const Icon(Icons.add),
-            )
-          ]
-        )
       ),
     );
   }

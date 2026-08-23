@@ -29,12 +29,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
   late DateTime _startTime;
   late DateTime _endTime;
   late bool _isAllDay;
-  bool _isRepeating = false;
-  String _repeatType = 'None';
-  DateTime _repeatEndDate = DateTime.now();
-  bool _endOn = false;
+  //bool _isRepeating = false;
+  //String _repeatType = 'None';
+  //DateTime _repeatEndDate = DateTime.now();
+  //bool _endOn = false;
 
-  final List<String> _types = ["Task", "Job", "Class", "Birthday", "Personal"];
+  final List<String> _eventTypes = ["Task", "Job", "Class", "Birthday", "Personal"];
   @override
   void initState() {
     super.initState();
@@ -43,12 +43,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
     _isAllDay = widget.event.isAllDay;
     if(widget.event.repeatType != null && widget.event.repeatType != 'None'){
       _eventType = widget.event.eventType;
-      _isRepeating = true;
-      _repeatType = widget.event.repeatType!;
+      //_isRepeating = true;
+      //_repeatType = widget.event.repeatType!;
     } else {
-      _eventType = _types.first;
-      _isRepeating = false;
-      _repeatType = 'None';
+      _eventType = _eventTypes.first;
+      //_isRepeating = false;
+      //_repeatType = 'None';
     }
     _startTime = widget.event.startTime;
     _endTime = widget.event.endTime;
@@ -74,6 +74,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } 
   }
 
+  /*
   Future<void> _manualSave() async{
     if(widget.event.id == null){
       print("Error: Event ID is null. Cannot update.");
@@ -103,8 +104,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
     } catch (e) {
       print("Connection Error: $e");
     }
-  }
-
+  }*/
+  /*
   Future<void> _pickDatetime({required bool isStart}) async {
     DateTime initialDate = isStart ? _startTime : _endTime;
     final pickedDate = await showDatePicker(
@@ -139,7 +140,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         }
       }
     });
-  }
+  }*/
 
   Future<void> _deleteSingleEvent() async {
     try{
@@ -175,61 +176,61 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
-    void _onDeleteButtonPressed(){
-      bool isSeriesEvent = widget.event.isRepeating == true && widget.event.seriesId != null;
-      if(isSeriesEvent){
-        showDialog(
-          context: context,
-          builder: (BuildContext context){
-            return AlertDialog(
-              title: const Text("Delete Event"),
-              actions: [
-                TextButton(
-                  onPressed: (){
-                    Navigator.pop(context);
-                    _deleteSingleEvent();
-                  },
-                  child: const Text("Delete this event only", style: TextStyle(color: Colors.red)),
-                ),
-                TextButton(
-                  onPressed: (){
-                    Navigator.pop(context);
-                    _deleteFutureEvents();
-                  },
-                  child: const Text("Delete all after this event", style: TextStyle(color: Colors.red)),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel"),
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        showDialog(
-          context: context,
-          builder: (BuildContext context){
-            return AlertDialog(
-              title: const Text("Delete Event"),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel"),
-                ),
-                TextButton(
-                  onPressed: (){
-                    Navigator.pop(context);
-                    _deleteSingleEvent();
-                  },
-                  child: const Text("Delete", style: TextStyle(color: Colors.red)),
-                ),
-              ],
-            );
-          },
-        );
-      }
+  void _onDeleteButtonPressed(){
+    bool isSeriesEvent = widget.event.isRepeating == true && widget.event.seriesId != null;
+    if(isSeriesEvent){
+      showDialog(
+        context: context,
+        builder: (BuildContext context){
+          return AlertDialog(
+            title: const Text("Delete Event"),
+            actions: [
+              TextButton(
+                onPressed: (){
+                  Navigator.pop(context);
+                  _deleteSingleEvent();
+                },
+                child: const Text("Delete this event only", style: TextStyle(color: Colors.red)),
+              ),
+              TextButton(
+                onPressed: (){
+                  Navigator.pop(context);
+                  _deleteFutureEvents();
+                },
+                child: const Text("Delete all after this event", style: TextStyle(color: Colors.red)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context){
+          return AlertDialog(
+            title: const Text("Delete Event"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: (){
+                  Navigator.pop(context);
+                  _deleteSingleEvent();
+                },
+                child: const Text("Delete", style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          );
+        },
+      );
     }
+  }
 
   Widget _buildTimeWidget(){
     bool isSameDay = widget.event.startTime.year == widget.event.endTime.year &&
@@ -287,9 +288,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
           const SizedBox(height: 20),
           // 8. Event Type Dropdown
           DropdownButtonFormField<String>(
-            value: widget.event.eventType.isNotEmpty ? widget.event.eventType : _types.first,
+            value: widget.event.eventType.isNotEmpty ? widget.event.eventType : _eventTypes.first,
             decoration: const InputDecoration(labelText: "Event Type", border: OutlineInputBorder()),
-            items: _types.map((String type){
+            items: _eventTypes.map((String type){
               return DropdownMenuItem<String>(
                 value: type, 
                 child: Text(

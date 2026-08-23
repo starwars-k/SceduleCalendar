@@ -45,6 +45,7 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _memoController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   String _eventType = 'Task'; //Default event type
   String _repeatType = 'Daily'; // Default repeat type
   DateTime _selectedDay = DateTime.now();
@@ -52,6 +53,11 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _startTime = DateTime.now(); // Default start time at now
   DateTime _endTime = DateTime.now().add(const Duration(hours: 1));
   bool _isAllDay = false; // New variable to track if the event is all-day
+  bool _isRepeating = false;
+  bool _endOn = false;
+  String _searchQuery = '';
+  bool _isSearching = false;
+  DateTime _repeatEndDate = DateTime.now().add(const Duration(days: 1)); // Default repeat end date
   CalendarFormat _calendarFormat = CalendarFormat.month;
   List<DailyEvent> _events = [];
   List<DailyEvent> get _selectedEvents {
@@ -65,10 +71,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
   final List<String> _eventTypes = ['Task', 'Job', 'Class', 'Birthday', 'Personal'];
   final List<String> _repeatOptions = ['Daily', 'Weekly', 'Biweekly', 'Monthly', 'Yearly'];
-  bool _isRepeating = false;
-  bool _endOn = false;
-  DateTime _repeatEndDate = DateTime.now().add(const Duration(days: 1)); // Default repeat end date
-
+  
   Color _getEventColor(String type){
     switch(type){
       case 'Task':
@@ -498,21 +501,19 @@ class _CalendarPageState extends State<CalendarPage> {
   */
 
   Future<void> fetchEventsFromJava() async {
-    await showLoadingIfNeeded(() async{
-      try{
-        //final response = await http.get(Uri.parse('http://localhost:8080/api/events')); 
-          final response = await http.get(Uri.parse('https://calendar-backend-qhny.onrender.com/api/events')); // Use the deployed backend URL
-        if (response.statusCode == 200) {
-          List<dynamic> body = jsonDecode(response.body);
-          if(!mounted) return; // Check if the widget is still mounted before calling setState
-          setState(() {
-            _events = body.map((dynamic item) => DailyEvent.fromJson(item)).cast<DailyEvent>().toList();
-          });
-        }
-      }catch(e){
-        print("FLUTTER ERROR: $e");
+    try{
+      //final response = await http.get(Uri.parse('http://localhost:8080/api/events')); 
+      final response = await http.get(Uri.parse('https://calendar-backend-qhny.onrender.com/api/events')); // Use the deployed backend URL
+      if (response.statusCode == 200) {
+        List<dynamic> body = jsonDecode(response.body);
+        if(!mounted) return; // Check if the widget is still mounted before calling setState
+        setState(() {
+          _events = body.map((dynamic item) => DailyEvent.fromJson(item)).cast<DailyEvent>().toList();
+        });
       }
-    });
+    }catch(e){
+      print("FLUTTER ERROR: $e");
+    }
   }
 
   /*
@@ -543,6 +544,7 @@ class _CalendarPageState extends State<CalendarPage> {
   */
 
   Future<void> _deleteEvent(int id) async{
+    await showLoadingIfNeeded(() async{
     try{
       final response = await http.delete(
         //Uri.parse('http://localhost:8080/api/events/$id'),
@@ -556,6 +558,7 @@ class _CalendarPageState extends State<CalendarPage> {
     }catch(e){
       print("ERROR deleting event: $e");
     }
+    });
   }
 
   String _formatToBackendIso(DateTime dateTime){
@@ -565,6 +568,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Future<void> _makeNewEvents(DateTime startTime, DateTime endTime) async {
+    await showLoadingIfNeeded(()async{
     try{
       final Map<String, dynamic> eventData ={
         'title': _titleController.text,
@@ -595,9 +599,11 @@ class _CalendarPageState extends State<CalendarPage> {
     }catch(e){
       print("EXCEPTION caught while saving batch events: $e");
     }
+    });
   }
 
   Future<void> _updateEvent(int id, DateTime startTime, DateTime endTime) async {
+    await showLoadingIfNeeded(() async {
     try{
       final Map<String, dynamic> eventData = {
         'title': _titleController.text,
@@ -629,6 +635,7 @@ class _CalendarPageState extends State<CalendarPage> {
     }catch(e){
       print("EXCEPTION caught while updating event: $e");
     }
+    });
   }
 
   //iOS style date picker for selecting the repeat end date

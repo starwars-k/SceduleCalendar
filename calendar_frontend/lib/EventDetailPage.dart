@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:calendar_frontend/event_model.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+//import 'dart:convert';
 
 class EventDetailPage extends StatefulWidget {
   final DailyEvent event;
@@ -23,12 +23,12 @@ class EventDetailPage extends StatefulWidget {
 }
 
 class _EventDetailPageState extends State<EventDetailPage> {
-  late TextEditingController _titleController;
+  //late TextEditingController _titleController;
   late TextEditingController _memoController;
   late String _eventType;
-  late DateTime _startTime;
-  late DateTime _endTime;
-  late bool _isAllDay;
+  //late DateTime _startTime;
+  //late DateTime _endTime;
+  //late bool _isAllDay;
   //bool _isRepeating = false;
   //String _repeatType = 'None';
   //DateTime _repeatEndDate = DateTime.now();
@@ -38,22 +38,22 @@ class _EventDetailPageState extends State<EventDetailPage> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.event.title);
-    _memoController = TextEditingController(text: widget.event.description);
-    _isAllDay = widget.event.isAllDay;
+    //_titleController = TextEditingController(text: widget.event.title);
+    //_memoController = TextEditingController(text: widget.event.description);
+    //_isAllDay = widget.event.isAllDay;
     if(widget.event.repeatType != null && widget.event.repeatType != 'None'){
       _eventType = widget.event.eventType;
       //_isRepeating = true;
       //_repeatType = widget.event.repeatType!;
     } else {
-      _eventType = _eventTypes.first;
+      //_eventType = _eventTypes.first;
       //_isRepeating = false;
       //_repeatType = 'None';
     }
-    _startTime = widget.event.startTime;
-    _endTime = widget.event.endTime;
+    //_startTime = widget.event.startTime;
+    //_endTime = widget.event.endTime;
   }
-
+  /*
   Future<void> _updateEvent() async {
     final response = await http.put(
       //Uri.parse('http://localhost:8080/api/events/${widget.event.id}'),
@@ -72,7 +72,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       widget.onUpdate();
       Navigator.pop(context);
     } 
-  }
+  }*/
 
   /*
   Future<void> _manualSave() async{

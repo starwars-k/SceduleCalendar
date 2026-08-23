@@ -154,26 +154,6 @@ class _CalendarPageState extends State<CalendarPage> {
                         decoration: const InputDecoration(hintText: "Event Title"),
                       ),
                       const SizedBox(height: 10),
-                      // 2. Event Date Picker
-                      TextButton.icon(
-                        icon: const Icon(Icons.calendar_today),
-                        label: Text("Select Date: ${DateFormat('yyyy-MM-dd').format(_selectedDay)}"),
-                        onPressed: () async{
-                          final DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedDay,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2100),
-                          );
-                          if(picked != null){
-                            setDialogState(() {
-                              _selectedDay = picked;
-                              _startTime = DateTime(picked.year, picked.month, picked.day, _startTime.hour, _startTime.minute);
-                              _endTime = DateTime(picked.year, picked.month, picked.day, _endTime.hour, _endTime.minute);
-                            });
-                          }
-                        },
-                      ),
                       // 3. All-Day Event Checkbox
                       Row(
                         children: [
@@ -199,12 +179,17 @@ class _CalendarPageState extends State<CalendarPage> {
                         // 4. Start Date & Time Picker
                         //Date Picker
                         ListTile(
-                          title: const Text("Start"),
+                          title: const Text("Start Time"),
                           trailing: Wrap(
                             spacing: 8,
                             children: [
                               TextButton.icon(
                                 label: Text(DateFormat('yyyy-MM-dd').format(_startTime)),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: CupertinoColors.extraLightBackgroundGray,
+                                  shape: const StadiumBorder(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0)
+                                ),
                                 onPressed:() async{
                                   final DateTime? pickedDate = await showDatePicker(
                                     context: context,
@@ -232,12 +217,16 @@ class _CalendarPageState extends State<CalendarPage> {
                               TextButton(
                                 child:Text(
                                   DateFormat('HH:mm').format(_startTime),
-                                  style:const TextStyle(fontSize:16, fontWeight:FontWeight.bold),
+                                ),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: CupertinoColors.extraLightBackgroundGray,
+                                  shape: const StadiumBorder(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0)
                                 ),
                                 onPressed: () async{
-                                  final TimeOfDay ? pickedTime = await showTimePicker(
+                                  final TimeOfDay ? pickedTime = await _showAppleStyleTimePicker(
                                     context:context,
-                                    initialTime: TimeOfDay.fromDateTime(_startTime),
+                                    initialTime: _startTime,
                                   );
                                   if(pickedTime != null){
                                     setDialogState(() {
@@ -262,22 +251,27 @@ class _CalendarPageState extends State<CalendarPage> {
                         // 5. End Date & Time Picker
                         //Date Picker
                         ListTile(
-                          title: const Text("End"),
+                          title: const Text("End Time"),
                           trailing: Wrap(
                             spacing: 8,
                             children: [
                               TextButton.icon(
                                 label: Text(DateFormat('yyyy-MM-dd').format(_endTime)),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: CupertinoColors.extraLightBackgroundGray,
+                                  shape: const StadiumBorder(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0)
+                                ),
                                 onPressed:() async{
                                   final DateTime? pickedDate = await showDatePicker(
-                          context: context,
+                                    context: context,
                                     initialDate: _endTime,
                                     firstDate: DateTime(2000),
                                     lastDate: DateTime(2100),
                                   );
                                   if(pickedDate != null){
                                     setDialogState(() {
-                          _endTime = DateTime(
+                                      _endTime = DateTime(
                                         pickedDate.year,
                                         pickedDate.month,
                                         pickedDate.day,
@@ -295,12 +289,16 @@ class _CalendarPageState extends State<CalendarPage> {
                               TextButton(
                                 child:Text(
                                   DateFormat('HH:mm').format(_endTime),
-                                  style:const TextStyle(fontSize:16, fontWeight:FontWeight.bold),
+                                ),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: CupertinoColors.extraLightBackgroundGray,
+                                  shape: const StadiumBorder(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0)
                                 ),
                                 onPressed: () async{
-                                  final TimeOfDay ? pickedTime = await showTimePicker(
+                                  final TimeOfDay ? pickedTime = await _showAppleStyleTimePicker(
                                     context:context,
-                                    initialTime: TimeOfDay.fromDateTime(_endTime),
+                                    initialTime: _endTime,
                                   );
                                   if(pickedTime != null){
                                     setDialogState(() {
@@ -321,8 +319,9 @@ class _CalendarPageState extends State<CalendarPage> {
                             ],
                           ),
                         ),
-                        const Divider(height:1),
-                        // 6. Repeat Event Checkbox
+                      ],
+                      const Divider(height:1),
+                      // 6. Repeat Event Checkbox
                       Row(
                         children: [
                           Checkbox(
@@ -448,7 +447,6 @@ class _CalendarPageState extends State<CalendarPage> {
                           ),
                         ],
                       )
-                    ],
                     ],
                   ),
                 ),
@@ -648,11 +646,11 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   //iOS style date picker for selecting the repeat end date
-  Future<TimeOfDay?> _showAppleStyleTimePicker(
-    BuildContext context,
-    DateTime initialDateTime,
-  ) async {
-    DateTime selected = initialDateTime;
+  Future<TimeOfDay?> _showAppleStyleTimePicker({
+    required BuildContext context,
+    required DateTime initialTime,
+  }) async {
+    DateTime selected = initialTime;
     return await showModalBottomSheet<TimeOfDay>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -687,7 +685,7 @@ class _CalendarPageState extends State<CalendarPage> {
               Expanded(
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.time,
-                  initialDateTime: initialDateTime,
+                  initialDateTime: initialTime,
                   use24hFormat: true,
                   onDateTimeChanged: (DateTime newDateTime) {
                     selected = newDateTime;

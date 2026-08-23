@@ -638,7 +638,7 @@ class _CalendarPageState extends State<CalendarPage> {
     }
     });
   }
-
+  /*
   List<DailyEvent> get _filteredEvents{
     final eventsForDay = _events.where((event){
       return isSameDay(event.startTime, _selectedDay);
@@ -650,7 +650,7 @@ class _CalendarPageState extends State<CalendarPage> {
       final titleMatch = event.title.toLowerCase().contains(_searchQuery);
       return titleMatch;
     }).toList();
-  }
+  }*/
 
   //iOS style date picker for selecting the repeat end date
   Future<TimeOfDay?> _showAppleStyleTimePicker({
@@ -769,7 +769,9 @@ class _CalendarPageState extends State<CalendarPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Row(
+                                //Search Box
                                 children:[
+                                  //Text Box
                                   Expanded(
                                     child: isSearchByName ? TextField(
                                       autofocus: true,
@@ -802,11 +804,13 @@ class _CalendarPageState extends State<CalendarPage> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
+                                  //Radio Button
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children:[
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
+                                        //Title Button
                                         children: [
                                           SizedBox(
                                             width:20,
@@ -856,7 +860,8 @@ class _CalendarPageState extends State<CalendarPage> {
                                 ],
                               ),
                               const SizedBox(height:8),
-                              if(!isSearchByName)
+                              if(!isSearchByName)...[
+                                Divider(height: 1),
                                 Container(
                                   constraints: const BoxConstraints(maxHeight: 150),
                                   child: ListView.builder(
@@ -879,8 +884,8 @@ class _CalendarPageState extends State<CalendarPage> {
                                     },
                                   ),
                                 ),
-                              
-                              if(localQuery.isNotEmpty && suggestions.isNotEmpty)
+                              ],
+                              if(localQuery.isNotEmpty && suggestions.isNotEmpty)...[
                                 const Divider(height: 1),
                                 Container(
                                   constraints: const BoxConstraints(maxHeight: 150),
@@ -927,7 +932,8 @@ class _CalendarPageState extends State<CalendarPage> {
                                     },
                                   ),
                                 ),
-                              if(localQuery.length>0 && suggestions.isEmpty)
+                              ],
+                              if(localQuery.isNotEmpty && suggestions.isEmpty)...[
                                 const Divider(height: 1),
                                 Container(
                                   constraints: const BoxConstraints(maxHeight: 150),
@@ -937,8 +943,9 @@ class _CalendarPageState extends State<CalendarPage> {
                                       fontSize: 12,
                                       color: Colors.black,
                                     ),
-                                  )
+                                  ),
                                 ),
+                              ],
                             ],
                           ),
                         );

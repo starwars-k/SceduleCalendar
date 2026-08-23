@@ -182,6 +182,13 @@ class _CalendarPageState extends State<CalendarPage> {
                             onChanged: (bool? value) {
                               setDialogState(() {
                                 _isAllDay = value ?? false;
+                                _startTime = DateTime(
+                                  _startTime.year,
+                                  _startTime.month,
+                                  _startTime.day,
+                                  DateTime.now().hour,
+                                  0,
+                                );
                               });
                             },
                           ),
@@ -189,90 +196,133 @@ class _CalendarPageState extends State<CalendarPage> {
                         ],
                       ),
                       if(!_isAllDay)...[
-                        // 4. Start Time Picker
+                        // 4. Start Date & Time Picker
+                        //Date Picker
                         ListTile(
-                          title: const Text("Start Time"),
-                          trailing: Text(
-                            '${_startTime.hour}:${_startTime.minute.toString().padLeft(2, '0')}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: _showStartTimePicker ? Colors.blue : Colors.black,
-                              fontWeight: _showStartTimePicker ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                          onTap: (){ 
-                            setDialogState(() {
-                              _showStartTimePicker = !_showStartTimePicker;
-                              if(_showStartTimePicker){
-                                _showEndTimePicker = false; // Close end time picker if open
-                              }
-                            });
-                          },
-                        ),
-                        if(_showStartTimePicker)
-                          Container(
-                            height: 200,
-                            color: CupertinoColors.systemBackground.resolveFrom(context),
-                            child: CupertinoDatePicker(
-                              mode: CupertinoDatePickerMode.time,
-                              initialDateTime: _startTime,
-                              use24hFormat: true,
-                              onDateTimeChanged: (DateTime newDateTime) {
-                                setDialogState(() {
-                                  _startTime = DateTime(
-                                    _startTime.year,
-                                    _startTime.month,
-                                    _startTime.day,
-                                    newDateTime.hour,
-                                    newDateTime.minute,
+                          title: const Text("Start"),
+                          trailing: Wrap(
+                            spacing: 8,
+                            children: [
+                              TextButton.icon(
+                                label: Text(DateFormat('yyyy-MM-dd').format(_startTime)),
+                                onPressed:() async{
+                                  final DateTime? pickedDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: _startTime,
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2100),
                                   );
-                                });
-                              },
-                            ),
-                          ),
-                          const Divider(height: 1),
-                          // 5. End Time Picker
-                          ListTile(
-                            title: const Text("End Time"),
-                            trailing: Text(
-                              '${_endTime.hour}:${_endTime.minute.toString().padLeft(2, '0')}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: _showEndTimePicker ? Colors.blue : Colors.black,
-                                fontWeight: _showEndTimePicker ? FontWeight.bold : FontWeight.normal,
+                                  if(pickedDate != null){
+                                    setDialogState(() {
+                                      _startTime = DateTime(
+                                        pickedDate.year,
+                                        pickedDate.month,
+                                        pickedDate.day,
+                                        _startTime.hour,
+                                        _startTime.minute,
+                                      );
+                                      if(_endTime.isBefore(_startTime)){
+                                        _endTime = _startTime.add(const Duration(hours:1));
+                                      }
+                                    });
+                                  }
+                                },
                               ),
-                            ),
-                            onTap: () => setDialogState(() {
-                              _showEndTimePicker = !_showEndTimePicker;
-                              if(_showEndTimePicker){
-                                _showStartTimePicker = false; // Close start time picker if open
-                              }
-                            }),
-                          ),
-                          if(_showEndTimePicker)
-                            Container(
-                              height: 200,
-                              color: CupertinoColors.systemBackground.resolveFrom(context),
-                              child: CupertinoDatePicker(
-                                mode: CupertinoDatePickerMode.time,
-                                initialDateTime: _endTime,
-                                use24hFormat: true,
-                                onDateTimeChanged: (DateTime newDateTime) {
-                                  setDialogState(() {
-                                    _endTime = DateTime(
-                                    _endTime.year,
-                                    _endTime.month,
-                                    _endTime.day,
-                                    newDateTime.hour,
-                                    newDateTime.minute,
+                              //TimePicker
+                              TextButton(
+                                child:Text(
+                                  DateFormat('HH:mm').format(_startTime),
+                                  style:const TextStyle(fontSize:16, fontWeight:FontWeight.bold),
+                                ),
+                                onPressed: () async{
+                                  final TimeOfDay ? pickedTime = await showTimePicker(
+                                    context:context,
+                                    initialTime: TimeOfDay.fromDateTime(_startTime),
                                   );
-                                });
-                              },
-                            ),
+                                  if(pickedTime != null){
+                                    setDialogState(() {
+                                      _startTime = DateTime(
+                                        _startTime.year,
+                                        _startTime.month,
+                                        _startTime.day,
+                                        pickedTime.hour,
+                                        pickedTime.minute,
+                                      );
+                                      if(_endTime.isBefore(_startTime)){
+                                        _endTime = _startTime.add(const Duration(hours:1));
+                                      }
+                                    });
+                                  }
+                                },
+                              ),
+                            ],
                           ),
-                          const Divider(height:1),
-                      ],
-                      // 6. Repeat Event Checkbox
+                        ),
+                        const Divider(height: 1),
+                        // 5. End Date & Time Picker
+                        //Date Picker
+                        ListTile(
+                          title: const Text("End"),
+                          trailing: Wrap(
+                            spacing: 8,
+                            children: [
+                              TextButton.icon(
+                                label: Text(DateFormat('yyyy-MM-dd').format(_endTime)),
+                                onPressed:() async{
+                                  final DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                                    initialDate: _endTime,
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if(pickedDate != null){
+                                    setDialogState(() {
+                          _endTime = DateTime(
+                                        pickedDate.year,
+                                        pickedDate.month,
+                                        pickedDate.day,
+                                        _endTime.hour,
+                                        _endTime.minute,
+                                      );
+                                      if(_startTime.isAfter(_endTime)){
+                                        _startTime = _endTime.subtract(const Duration(hours:1));
+                                      }
+                                    });
+                                  }
+                                },
+                              ),
+                              //TimePicker
+                              TextButton(
+                                child:Text(
+                                  DateFormat('HH:mm').format(_endTime),
+                                  style:const TextStyle(fontSize:16, fontWeight:FontWeight.bold),
+                                ),
+                                onPressed: () async{
+                                  final TimeOfDay ? pickedTime = await showTimePicker(
+                                    context:context,
+                                    initialTime: TimeOfDay.fromDateTime(_endTime),
+                                  );
+                                  if(pickedTime != null){
+                                    setDialogState(() {
+                                      _endTime = DateTime(
+                                        _endTime.year,
+                                        _endTime.month,
+                                        _endTime.day,
+                                        pickedTime.hour,
+                                        pickedTime.minute,
+                                      );
+                                      if(_startTime.isAfter(_endTime)){
+                                        _startTime = _endTime.add(const Duration(hours:1));
+                                      }
+                                    });
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(height:1),
+                        // 6. Repeat Event Checkbox
                       Row(
                         children: [
                           Checkbox(
@@ -398,6 +448,7 @@ class _CalendarPageState extends State<CalendarPage> {
                           ),
                         ],
                       )
+                    ],
                     ],
                   ),
                 ),

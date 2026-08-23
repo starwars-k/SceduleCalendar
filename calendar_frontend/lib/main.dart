@@ -641,7 +641,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   List<DailyEvent> get _filteredEvents{
     final eventsForDay = _events.where((event){
-      return isSameDay(event.data, _selectedDay);
+      return isSameDay(event.startTime, _selectedDay);
     }).toList();
     if(_searchQuery.isEmpty){
       return eventsForDay;
@@ -740,6 +740,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 ),
                 Offset.zero & overlay.size,
               );
+              String localQuery = '';
               await showMenu(
                 context: context,
                 position: position,
@@ -750,20 +751,63 @@ class _CalendarPageState extends State<CalendarPage> {
                   PopupMenuItem<String>(
                     value: 'search',
                     enabled: false,
-                    child: SizedBox(
-                      child: TextField(
-                        autofocus: true,
-                        decoration: const InputDecoration(
-                          hintText: 'Search by event name or type...',
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (value){
-                          setState((){
-                            _searchQuery = value.toLowerCase();
-                          });
-                        },
-                      ),
+                    child: StatefulBuilder(
+                      builder:(context, menuSetState){
+                        final suggestions = _events.where((event){
+                          if(localQuery.isEmpty)return false;
+                          return event.title.toLowerCase().contains(localQuery.toLowerCase());
+                        }).toList();
+                        return SizedBox(
+                          width: 250,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
+                                autofocus: true,
+                                decoration: const InputDecoration(
+                                  hintText: 'Search event by name or type...',
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (value){
+                                  menuSetState((){
+                                    localQuery = value;
+                                  });
+                                  setState((){
+                                    _searchQuery = value.toLowerCase();
+                                  });
+                                },
+                              ),
+                              if(localQuery.isNotEmpty && suggestions.isNotEmpty)
+                                Container(
+                                  constraints: const BoxConstraints(maxHeight: 150),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: suggestions.length,
+                                    itemBuilder: (context, index){
+                                      final event = suggestions[index];
+                                      return ListTile(
+                                        dense: true,
+                                        title: Text(
+                                          event.title,
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                        onTap: (){
+                                          Navigator.pop(context);
+                                          setState((){
+                                            _selectedDay = event.startTime;
+                                            _focusedDay = event.startTime;
+                                            _searchQuery = event.title.toLowerCase();
+                                          });
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

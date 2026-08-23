@@ -45,7 +45,7 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _memoController = TextEditingController();
-  final TextEditingController _searchController = TextEditingController();
+  //final TextEditingController _searchController = TextEditingController();
   String _eventType = 'Task'; //Default event type
   String _repeatType = 'Daily'; // Default repeat type
   DateTime _selectedDay = DateTime.now();
@@ -56,7 +56,7 @@ class _CalendarPageState extends State<CalendarPage> {
   bool _isRepeating = false;
   bool _endOn = false;
   String _searchQuery = '';
-  bool _isSearching = false;
+  final bool _isSearching = false;
   DateTime _repeatEndDate = DateTime.now().add(const Duration(days: 1)); // Default repeat end date
   CalendarFormat _calendarFormat = CalendarFormat.month;
   List<DailyEvent> _events = [];
@@ -688,7 +688,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   ),
                 ],
               ),
-              const Divider(height: 0),
+              const Divider(height: 1),
               Expanded(
                 child: CupertinoDatePicker(
                   mode: CupertinoDatePickerMode.time,
@@ -724,6 +724,8 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget build(BuildContext context) {
+    String localQuery = '';
+    bool isSearchByName = true;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Schedule Calendar'),
@@ -731,6 +733,7 @@ class _CalendarPageState extends State<CalendarPage> {
           IconButton(
             icon: Icon(_isSearching ? Icons.close: Icons.search),
             onPressed: () async{
+              localQuery = '';
               final RenderBox button = context.findRenderObject() as RenderBox;
               final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
               final RelativeRect position = RelativeRect.fromRect(
@@ -740,7 +743,6 @@ class _CalendarPageState extends State<CalendarPage> {
                 ),
                 Offset.zero & overlay.size,
               );
-              String localQuery = '';
               await showMenu(
                 context: context,
                 position: position,
@@ -748,37 +750,138 @@ class _CalendarPageState extends State<CalendarPage> {
                   borderRadius: BorderRadius.circular(24.0),
                 ),
                 items: [
-                  PopupMenuItem<String>(
+                  PopupMenuItem(
                     value: 'search',
                     enabled: false,
                     child: StatefulBuilder(
                       builder:(context, menuSetState){
                         final suggestions = _events.where((event){
                           if(localQuery.isEmpty)return false;
-                          return event.title.toLowerCase().contains(localQuery.toLowerCase());
+                          if(isSearchByName){
+                            return event.title.toLowerCase().startsWith(localQuery.toLowerCase());
+                          }else{
+                            return event.eventType.toLowerCase().startsWith(localQuery.toLowerCase());
+                          }
                         }).toList();
                         return SizedBox(
-                          width: 250,
+                          width: 500,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              TextField(
-                                autofocus: true,
-                                decoration: const InputDecoration(
-                                  hintText: 'Search event by name or type...',
-                                  isDense: true,
-                                  border: OutlineInputBorder(),
-                                ),
-                                onChanged: (value){
-                                  menuSetState((){
-                                    localQuery = value;
-                                  });
-                                  setState((){
-                                    _searchQuery = value.toLowerCase();
-                                  });
-                                },
+                              Row(
+                                children:[
+                                  Expanded(
+                                    child: isSearchByName ? TextField(
+                                      autofocus: true,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Search event by title or type...',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      onChanged: (value){
+                                        menuSetState((){
+                                          localQuery = value;
+                                        });
+                                        setState((){
+                                          _searchQuery = value.toLowerCase();
+                                        });
+                                      },
+                                    ): Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        localQuery.isEmpty ? 'Select a type below': localQuery,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: localQuery.isEmpty ? Colors.grey: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children:[
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SizedBox(
+                                            width:20,
+                                            height: 20,
+                                            child: Radio<bool>(
+                                              value: true,
+                                              groupValue: isSearchByName,
+                                              onChanged: (value){
+                                                if(value != null){
+                                                  menuSetState((){
+                                                    isSearchByName = value;
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Text('Title', style: TextStyle(fontSize:12, color:Colors.black)),
+                                        ],
+                                      ),
+                                      const SizedBox(height:8),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children:[
+                                          SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: Radio<bool>(
+                                              value: false,
+                                              groupValue: isSearchByName,
+                                              onChanged: (value){
+                                                if(value != null){
+                                                  menuSetState((){
+                                                    isSearchByName = value;
+                                                    localQuery = '';
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text('Type', style: TextStyle(fontSize: 12, color: Colors.black)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
+                              const SizedBox(height:8),
+                              if(!isSearchByName)
+                                Container(
+                                  constraints: const BoxConstraints(maxHeight: 150),
+                                  child: ListView.builder(
+                                    shrinkWrap:true,
+                                    itemCount: _eventTypes.length,
+                                    itemBuilder: (context, index){
+                                      final typeName = _eventTypes[index];
+                                      return ListTile(
+                                        dense: true,
+                                        title: Text(typeName, style: TextStyle(fontSize:13, color: _getEventColor(typeName))),
+                                        onTap: (){
+                                          menuSetState((){
+                                            localQuery = typeName;
+                                          });
+                                          setState((){
+                                            _searchQuery = typeName.toLowerCase();
+                                          });
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                              
                               if(localQuery.isNotEmpty && suggestions.isNotEmpty)
+                                const Divider(height: 1),
                                 Container(
                                   constraints: const BoxConstraints(maxHeight: 150),
                                   child: ListView.builder(
@@ -788,9 +891,29 @@ class _CalendarPageState extends State<CalendarPage> {
                                       final event = suggestions[index];
                                       return ListTile(
                                         dense: true,
-                                        title: Text(
-                                          event.title,
-                                          style: const TextStyle(fontSize: 14),
+                                        title: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                event.title,
+                                                style: const TextStyle(fontSize: 14, color: Colors.black),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),                                              
+                                            Text(
+                                              DateFormat('yyyy-MM-dd').format(event.startTime),
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        subtitle: Text(
+                                          event.eventType,
+                                          style: TextStyle(fontSize: 14, color:_getEventColor(event.eventType)),
                                         ),
                                         onTap: (){
                                           Navigator.pop(context);
@@ -803,6 +926,18 @@ class _CalendarPageState extends State<CalendarPage> {
                                       );
                                     },
                                   ),
+                                ),
+                              if(localQuery.length>0 && suggestions.isEmpty)
+                                const Divider(height: 1),
+                                Container(
+                                  constraints: const BoxConstraints(maxHeight: 150),
+                                  child: Text(
+                                    'Cannot find event',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                    ),
+                                  )
                                 ),
                             ],
                           ),

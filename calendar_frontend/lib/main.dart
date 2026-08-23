@@ -460,6 +460,7 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
+
   /*
   void _showEventDetailDialog(BuildContext context, DailyEvent event){
     showDialog(
@@ -638,6 +639,19 @@ class _CalendarPageState extends State<CalendarPage> {
     });
   }
 
+  List<DailyEvent> get _filteredEvents{
+    final eventsForDay = _events.where((event){
+      return isSameDay(event.data, _selectedDay);
+    }).toList();
+    if(_searchQuery.isEmpty){
+      return eventsForDay;
+    }
+    return eventsForDay.where((event){
+      final titleMatch = event.title.toLowerCase().contains(_searchQuery);
+      return titleMatch;
+    }).toList();
+  }
+
   //iOS style date picker for selecting the repeat end date
   Future<TimeOfDay?> _showAppleStyleTimePicker({
     required BuildContext context,
@@ -713,6 +727,50 @@ class _CalendarPageState extends State<CalendarPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Schedule Calendar'),
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close: Icons.search),
+            onPressed: () async{
+              final RenderBox button = context.findRenderObject() as RenderBox;
+              final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+              final RelativeRect position = RelativeRect.fromRect(
+                Rect.fromPoints(
+                  button.localToGlobal(Offset.zero, ancestor:overlay),
+                  button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+                ),
+                Offset.zero & overlay.size,
+              );
+              await showMenu(
+                context: context,
+                position: position,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                items: [
+                  PopupMenuItem<String>(
+                    value: 'search',
+                    enabled: false,
+                    child: SizedBox(
+                      child: TextField(
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          hintText: 'Search by event name or type...',
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (value){
+                          setState((){
+                            _searchQuery = value.toLowerCase();
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
       body: Stack(
         children:[

@@ -39,14 +39,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
   void initState() {
     super.initState();
     //_titleController = TextEditingController(text: widget.event.title);
-    //_memoController = TextEditingController(text: widget.event.description);
+    _memoController = TextEditingController(text: widget.event.description);
     //_isAllDay = widget.event.isAllDay;
     if(widget.event.repeatType != null && widget.event.repeatType != 'None'){
       _eventType = widget.event.eventType;
       //_isRepeating = true;
       //_repeatType = widget.event.repeatType!;
     } else {
-      //_eventType = _eventTypes.first;
+      _eventType = _eventTypes.first;
       //_isRepeating = false;
       //_repeatType = 'None';
     }

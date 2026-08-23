@@ -52,8 +52,6 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _startTime = DateTime.now(); // Default start time at now
   DateTime _endTime = DateTime.now().add(const Duration(hours: 1));
   bool _isAllDay = false; // New variable to track if the event is all-day
-  bool _showStartTimePicker = false; // New variable to track if the start time picker should be shown
-  bool _showEndTimePicker = false; // New variable to track if the end time picker should be shown 
   CalendarFormat _calendarFormat = CalendarFormat.month;
   List<DailyEvent> _events = [];
   List<DailyEvent> get _selectedEvents {
@@ -433,9 +431,10 @@ class _CalendarPageState extends State<CalendarPage> {
                             onPressed: () {
                               if(_titleController.text.isNotEmpty){
                                 if(!isEditing && eventToEdit != null && eventToEdit.id != null){
+                                  globalLoading.value = true;
                                   _updateEvent(eventToEdit.id!, _startTime, _endTime);
                                 }else{
-                                  _saveBatchEvents(_startTime, _endTime);
+                                  _makeNewEvents(_startTime, _endTime);
                                 }
                               }else{
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -499,24 +498,21 @@ class _CalendarPageState extends State<CalendarPage> {
   */
 
   Future<void> fetchEventsFromJava() async {
-    try{
-      //final response = await http.get(Uri.parse('http://localhost:8080/api/events')); 
-        final response = await http.get(Uri.parse('https://calendar-backend-qhny.onrender.com/api/events')); // Use the deployed backend URL
-      if (response.statusCode == 200) {
-        List<dynamic> body = jsonDecode(response.body);
-        if(!mounted) return; // Check if the widget is still mounted before calling setState
-        setState(() {
-          _events = body.map((dynamic item) => DailyEvent.fromJson(item)).cast<DailyEvent>().toList();
-        });
+    await showLoadingIfNeeded(() async{
+      try{
+        //final response = await http.get(Uri.parse('http://localhost:8080/api/events')); 
+          final response = await http.get(Uri.parse('https://calendar-backend-qhny.onrender.com/api/events')); // Use the deployed backend URL
+        if (response.statusCode == 200) {
+          List<dynamic> body = jsonDecode(response.body);
+          if(!mounted) return; // Check if the widget is still mounted before calling setState
+          setState(() {
+            _events = body.map((dynamic item) => DailyEvent.fromJson(item)).cast<DailyEvent>().toList();
+          });
+        }
+      }catch(e){
+        print("FLUTTER ERROR: $e");
       }
-    }catch(e){
-      print("FLUTTER ERROR: $e");
-    }finally{
-      if(!mounted) return; // Check if the widget is still mounted before calling setState
-      setState(() {
-        globalLoading.value = false; // Set loading state to false after fetching events
-      });
-    }
+    });
   }
 
   /*
@@ -547,21 +543,19 @@ class _CalendarPageState extends State<CalendarPage> {
   */
 
   Future<void> _deleteEvent(int id) async{
-    await showLoadingIfNeeded(() async{
-      try{
-        final response = await http.delete(
-          //Uri.parse('http://localhost:8080/api/events/$id'),
-          Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
-        );
-        if(response.statusCode == 200 || response.statusCode == 201){
-          fetchEventsFromJava(); // Refresh the event list after deleting
-        }else{
-          print("Failed to delete event. Status code: ${response.statusCode}");
-        }
-      }catch(e){
-        print("ERROR deleting event: $e");
+    try{
+      final response = await http.delete(
+        //Uri.parse('http://localhost:8080/api/events/$id'),
+        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
+      );
+      if(response.statusCode == 200 || response.statusCode == 201){
+        fetchEventsFromJava(); // Refresh the event list after deleting
+      }else{
+        print("Failed to delete event. Status code: ${response.statusCode}");
       }
-    });
+    }catch(e){
+      print("ERROR deleting event: $e");
+    }
   }
 
   String _formatToBackendIso(DateTime dateTime){
@@ -570,79 +564,71 @@ class _CalendarPageState extends State<CalendarPage> {
     return '$base.$ms';
   }
 
-  Future<void> _saveBatchEvents(DateTime startTime, DateTime endTime) async {
-    await showLoadingIfNeeded(() async{
-      try{
-        final Map<String, dynamic> eventData ={
-          'title': _titleController.text,
-          'description': _memoController.text,
-          'startTime': _formatToBackendIso(startTime),
-          'endTime': _formatToBackendIso(endTime),
-          'eventType': _eventType,
-          'isAllDay': _isAllDay,
-          'isRepeating': _isRepeating,
-          'repeatType': _isRepeating ? _repeatType : 'None',
-          'endOn': _isRepeating ? _endOn : false,
-          'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
-        };
-
-        print("Sending event to server: $eventData");
-
-        final response = await http.post(
-          //Uri.parse('http://localhost:8080/api/events/batch'),
-          Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/'), // Use the deployed backend URL
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(eventData),
-        );
-        if(response.statusCode == 200 || response.statusCode == 201){
-          fetchEventsFromJava(); // Refresh the event list after batch saving
-          Navigator.pop(context);
-        }else{
-          print("Failed to save batch events. Status code: ${response.statusCode}");
-          print("Response body: ${response.body}");
-        }
-      }catch(e){
-        print("EXCEPTION caught while saving batch events: $e");
+  Future<void> _makeNewEvents(DateTime startTime, DateTime endTime) async {
+    try{
+      final Map<String, dynamic> eventData ={
+        'title': _titleController.text,
+        'description': _memoController.text,
+        'startTime': _formatToBackendIso(startTime),
+        'endTime': _formatToBackendIso(endTime),
+        'eventType': _eventType,
+        'isAllDay': _isAllDay,
+        'isRepeating': _isRepeating,
+        'repeatType': _isRepeating ? _repeatType : 'None',
+        'endOn': _isRepeating ? _endOn : false,
+        'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
+      };
+      //print("Sending event to server: $eventData");
+      final response = await http.post(
+        //Uri.parse('http://localhost:8080/api/events/batch'),
+        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/'), // Use the deployed backend URL
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(eventData),
+      );
+      if(response.statusCode == 200 || response.statusCode == 201){
+        fetchEventsFromJava(); // Refresh the event list after batch saving
+        Navigator.pop(context);
+      }else{
+        print("Failed to save batch events. Status code: ${response.statusCode}");
+        print("Response body: ${response.body}");
       }
-    });
+    }catch(e){
+      print("EXCEPTION caught while saving batch events: $e");
+    }
   }
 
   Future<void> _updateEvent(int id, DateTime startTime, DateTime endTime) async {
-    await showLoadingIfNeeded(() async{
-      try{
-        final Map<String, dynamic> eventData = {
-          'title': _titleController.text,
-          'description': _memoController.text,
-          'startTime': _formatToBackendIso(startTime),
-          'endTime': _formatToBackendIso(endTime),
-          'eventType': _eventType,
-          'isAllDay': _isAllDay,
-          'isRepeating': _isRepeating,
-          'repeatType': _isRepeating ? _repeatType : 'None',
-          'endOn': _isRepeating ? _endOn : false,
-          'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
-        };
-
-        print("Updating event with ID $id: $eventData");
-
-        final response = await http.put(
-          //Uri.parse('http://localhost:8080/api/events/$id'),
-          Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(eventData),
-        );
-        if(response.statusCode == 200 || response.statusCode == 204){
-          if(!mounted) return; // Check if the widget is still mounted before calling setState
-          fetchEventsFromJava(); // Refresh the event list after updating
-          Navigator.pop(context);
-        }else{
-          print("Failed to update event. Status code: ${response.statusCode}");
-          print("Response body: ${response.body}");
-        }
-      }catch(e){
-        print("EXCEPTION caught while updating event: $e");
+    try{
+      final Map<String, dynamic> eventData = {
+        'title': _titleController.text,
+        'description': _memoController.text,
+        'startTime': _formatToBackendIso(startTime),
+        'endTime': _formatToBackendIso(endTime),
+        'eventType': _eventType,
+        'isAllDay': _isAllDay,
+        'isRepeating': _isRepeating,
+        'repeatType': _isRepeating ? _repeatType : 'None',
+        'endOn': _isRepeating ? _endOn : false,
+        'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
+      };
+      print("Updating event with ID $id: $eventData");
+      final response = await http.put(
+        //Uri.parse('http://localhost:8080/api/events/$id'),
+        Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/$id'), // Use the deployed backend URL
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(eventData),
+      );
+      if(response.statusCode == 200 || response.statusCode == 204){
+        if(!mounted) return; // Check if the widget is still mounted before calling setState
+        fetchEventsFromJava(); // Refresh the event list after updating
+        Navigator.pop(context);
+      }else{
+        print("Failed to update event. Status code: ${response.statusCode}");
+        print("Response body: ${response.body}");
       }
-    });
+    }catch(e){
+      print("EXCEPTION caught while updating event: $e");
+    }
   }
 
   //iOS style date picker for selecting the repeat end date

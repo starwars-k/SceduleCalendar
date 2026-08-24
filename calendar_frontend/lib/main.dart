@@ -788,19 +788,35 @@ class _CalendarPageState extends State<CalendarPage> {
                                           _searchQuery = value.toLowerCase();
                                         });
                                       },
-                                    ): Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey),
-                                        borderRadius: BorderRadius.circular(4),
+                                    ): DropdownButtonFormField<String>(
+                                      value: localQuery.isEmpty ? null: localQuery,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Select a type',
+                                        isDense: true,
+                                        border: OutlineInputBorder(),
                                       ),
-                                      child: Text(
-                                        localQuery.isEmpty ? 'Select a type below': localQuery,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: localQuery.isEmpty ? Colors.grey: Colors.black,
-                                        ),
-                                      ),
+                                      items: _eventTypes.map((String typeName){
+                                        return DropdownMenuItem<String>(
+                                          value: typeName,
+                                          child: Text(
+                                            typeName,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: _getEventColor(typeName),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue){
+                                        if(newValue != null){
+                                          menuSetState((){
+                                            localQuery = newValue;
+                                          });
+                                          setState((){
+                                            _searchQuery = newValue.toLowerCase();
+                                          });
+                                        }
+                                      },
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -808,9 +824,9 @@ class _CalendarPageState extends State<CalendarPage> {
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children:[
+                                      //1. Title Button
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
-                                        //Title Button
                                         children: [
                                           SizedBox(
                                             width:20,
@@ -822,6 +838,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                                 if(value != null){
                                                   menuSetState((){
                                                     isSearchByName = value;
+                                                    localQuery = '';
                                                   });
                                                 }
                                               },
@@ -832,6 +849,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                         ],
                                       ),
                                       const SizedBox(height:8),
+                                      //2. Type Button
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children:[
@@ -860,6 +878,8 @@ class _CalendarPageState extends State<CalendarPage> {
                                 ],
                               ),
                               const SizedBox(height:8),
+                              // Search by type
+                              /*
                               if(!isSearchByName)...[
                                 Divider(height: 1),
                                 Container(
@@ -884,7 +904,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                     },
                                   ),
                                 ),
-                              ],
+                              ],*/
                               if(localQuery.isNotEmpty && suggestions.isNotEmpty)...[
                                 const Divider(height: 1),
                                 Container(

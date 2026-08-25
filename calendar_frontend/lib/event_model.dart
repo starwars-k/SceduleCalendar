@@ -11,7 +11,7 @@ class DailyEvent{
   final bool? endOn;
   final DateTime? repeatEndOn;
   final String? seriesId;
-
+  
   DailyEvent({
     this.id, 
     required this.title, 

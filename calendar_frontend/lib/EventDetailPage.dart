@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:calendar_frontend/event_model.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
-//import 'dart:convert';
+import 'dart:async';
+
+
+final ValueNotifier<bool> globalLoading = ValueNotifier<bool>(false);
+
 
 class EventDetailPage extends StatefulWidget {
   final DailyEvent event;
   final Function() onUpdate;
   final Function(int) onDelete;
   final Function() onEdit;
+  final List<String> allEventTypes;
+  final Function(String) onEventTypeChanged;
 
   const EventDetailPage({
     super.key, 
@@ -16,6 +22,8 @@ class EventDetailPage extends StatefulWidget {
     required this.onDelete,
     required this.onUpdate,
     required this.onEdit,
+    required this.allEventTypes,
+    required this.onEventTypeChanged,
   });
 
   @override
@@ -24,7 +32,7 @@ class EventDetailPage extends StatefulWidget {
 
 class _EventDetailPageState extends State<EventDetailPage> {
   //late TextEditingController _titleController;
-  late TextEditingController _memoController;
+  //late TextEditingController _memoController;
   late String _eventType;
   //late DateTime _startTime;
   //late DateTime _endTime;
@@ -34,24 +42,27 @@ class _EventDetailPageState extends State<EventDetailPage> {
   //DateTime _repeatEndDate = DateTime.now();
   //bool _endOn = false;
 
-  final List<String> _eventTypes = ["Task", "Job", "Class", "Birthday", "Personal"];
+  //final List<String> _eventTypes = ["Task", "Job", "Class", "Birthday", "Personal"];
   @override
   void initState() {
     super.initState();
+    _eventType = widget.event.eventType;
+    /*
     //_titleController = TextEditingController(text: widget.event.title);
-    _memoController = TextEditingController(text: widget.event.description);
+    //_memoController = TextEditingController(text: widget.event.description);
     //_isAllDay = widget.event.isAllDay;
     if(widget.event.repeatType != null && widget.event.repeatType != 'None'){
       _eventType = widget.event.eventType;
       //_isRepeating = true;
       //_repeatType = widget.event.repeatType!;
     } else {
-      _eventType = _eventTypes.first;
+      //_eventType = widget.eventTypes.first;
       //_isRepeating = false;
       //_repeatType = 'None';
     }
     //_startTime = widget.event.startTime;
     //_endTime = widget.event.endTime;
+    */
   }
   /*
   Future<void> _updateEvent() async {
@@ -232,24 +243,53 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  Future<T> showLoadingIfNeeded<T>(Future<T> Function() task) async{
+    bool isShown = false;
+    Timer timer = Timer(const Duration(milliseconds: 100), (){
+      isShown = true;
+      globalLoading.value = true;
+    });
+    
+    try{
+      return await task();
+    }finally{
+      timer.cancel();
+      if(isShown){
+        globalLoading.value = false;
+      }
+    }
+  }
+
   Widget _buildTimeWidget(){
     bool isSameDay = widget.event.startTime.year == widget.event.endTime.year &&
       widget.event.startTime.month == widget.event.endTime.month &&
       widget.event.startTime.day == widget.event.endTime.day;
     if(widget.event.isAllDay&&isSameDay){
       return Text(
+        style: TextStyle(
+          fontSize: 15,
+        ),
         '${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)}\nAll-Day'
       );
     }else if(widget.event.isAllDay){
       return Text(
+        style: TextStyle(
+          fontSize: 15,
+        ),
         '${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)} - ${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.endTime)}\nAll-Day'
       );
     }else if(isSameDay){
       return Text(
+        style: TextStyle(
+          fontSize: 15,
+        ),
         '${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)}\n${DateFormat('HH:mm').format(widget.event.startTime)}-${DateFormat('HH:mm').format(widget.event.endTime)}'
       );
     }else{
       return Text(
+        style: TextStyle(
+          fontSize: 15,
+        ),
         'Start:${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)}\nEnd:${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.endTime)}'
       );
     }
@@ -265,32 +305,35 @@ class _EventDetailPageState extends State<EventDetailPage> {
           IconButton(
             icon: const Icon(Icons.edit, size: 28, color: Colors.green),
             onPressed: widget.onEdit,
-          ),
+          ),/*
           IconButton(
             icon: Icon(Icons.delete, size: 28, color: Colors.red.shade400),
             onPressed: _onDeleteButtonPressed,
-          ),
+          ),*/
         ],
       ),
-      body: ListView(
+      body: Padding(
         padding: const EdgeInsets.all(16),
-        children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children:[
           // 1. Title
           Text(
             widget.event.title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            )
           ),
-          const Divider(),
           const SizedBox(height: 20),
-          
           //2. Time
           _buildTimeWidget(),
-          
-          const SizedBox(height: 20),
-          // 8. Event Type Dropdown
+          const SizedBox(height: 40),
+          // 3. Event Type Dropdown
           DropdownButtonFormField<String>(
-            value: widget.event.eventType.isNotEmpty ? widget.event.eventType : _eventTypes.first,
+            value: widget.event.eventType.isNotEmpty ? widget.event.eventType : widget.allEventTypes.first,
             decoration: const InputDecoration(labelText: "Event Type", border: OutlineInputBorder()),
-            items: _eventTypes.map((String type){
+            items: widget.allEventTypes.map((String type){
               return DropdownMenuItem<String>(
                 value: type, 
                 child: Text(
@@ -304,22 +347,64 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 setState(() {
                   _eventType = newValue;
                 });
+                widget.onEventTypeChanged(newValue);
               }
             },
           ),
-          const SizedBox(height: 20),
-          // 9. Memo
-          TextField(
-            controller: _memoController,
-            decoration: const InputDecoration(
-              labelText: "Memo", 
-              border: OutlineInputBorder(),
+          const SizedBox(height: 40),
+          if(widget.event.description.isNotEmpty)...[
+            // 4. Memo
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal:12, vertical: 8),
+              decoration: const ShapeDecoration(
+                color: Colors.white,
+                shape: StadiumBorder(),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Memo', 
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    widget.event.description,
+                    style: const TextStyle(
+                      fontSize:16,
+                      color: Colors.black,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            maxLines: 1,
+            const SizedBox(height: 10),
+          ],
+          const SizedBox(height: 400),
+          Padding(
+            padding: const EdgeInsets.only(top: 30.0),
+            child: Align(
+              alignment: Alignment.center,
+            child: ElevatedButton.icon(
+              onPressed: _onDeleteButtonPressed,
+              //icon: const Icon(Icons.delete, color: Colors.red),
+              label: const Text("Delete Event", style: TextStyle(color: Colors.red, fontSize: 16)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                //padding:const EdgeInsets.symmetric(vertical: 12),
+                shape: const StadiumBorder(),
+              )
+            ),
+            ),
           ),
-
-        ],
+          ],
+        ),
       ),
+      
     );
   } 
   /*

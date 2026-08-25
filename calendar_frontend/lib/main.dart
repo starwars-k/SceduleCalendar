@@ -350,7 +350,7 @@ class _CalendarPageState extends State<CalendarPage> {
                             labelText: "How often?",
                             border: OutlineInputBorder()
                           ),
-                          items: ['Daily', 'Weekly', 'Biweekly', 'Monthly', 'Yearly'].map((option) =>
+                          items: _repeatOptions.map((option) =>
                             DropdownMenuItem<String>(
                               value: option,
                               child: Text(option),
@@ -502,19 +502,21 @@ class _CalendarPageState extends State<CalendarPage> {
   */
 
   Future<void> fetchEventsFromJava() async {
-    try{
-      //final response = await http.get(Uri.parse('http://localhost:8080/api/events')); 
-      final response = await http.get(Uri.parse('https://calendar-backend-qhny.onrender.com/api/events')); // Use the deployed backend URL
-      if (response.statusCode == 200) {
-        List<dynamic> body = jsonDecode(response.body);
-        if(!mounted) return; // Check if the widget is still mounted before calling setState
-        setState(() {
-          _events = body.map((dynamic item) => DailyEvent.fromJson(item)).cast<DailyEvent>().toList();
-        });
+    await showLoadingIfNeeded(()async{
+      try{
+        //final response = await http.get(Uri.parse('http://localhost:8080/api/events')); 
+        final response = await http.get(Uri.parse('https://calendar-backend-qhny.onrender.com/api/events')); // Use the deployed backend URL
+        if (response.statusCode == 200) {
+          List<dynamic> body = jsonDecode(response.body);
+          if(!mounted) return; // Check if the widget is still mounted before calling setState
+          setState(() {
+            _events = body.map((dynamic item) => DailyEvent.fromJson(item)).cast<DailyEvent>().toList();
+          });
+        }
+      }catch(e){
+        print("FLUTTER ERROR: $e");
       }
-    }catch(e){
-      print("FLUTTER ERROR: $e");
-    }
+    });
   }
 
   /*
@@ -545,7 +547,7 @@ class _CalendarPageState extends State<CalendarPage> {
   */
 
   Future<void> _deleteEvent(int id) async{
-    await showLoadingIfNeeded(() async{
+    await showLoadingIfNeeded(() async {
     try{
       final response = await http.delete(
         //Uri.parse('http://localhost:8080/api/events/$id'),
@@ -569,7 +571,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Future<void> _makeNewEvents(DateTime startTime, DateTime endTime) async {
-    await showLoadingIfNeeded(()async{
+    await showLoadingIfNeeded(() async {
     try{
       final Map<String, dynamic> eventData ={
         'title': _titleController.text,
@@ -1069,9 +1071,15 @@ class _CalendarPageState extends State<CalendarPage> {
                                 _showAddEventDialog(
                                   context, 
                                   event.startTime, 
-                                  eventToEdit: event
+                                  eventToEdit: event,                                  
                                 );
-                              }
+                              },
+                              allEventTypes: _eventTypes,
+                              onEventTypeChanged: (newType){
+                                setState(() {
+                                  _eventType = newType;
+                                });
+                              },
                             ),
                           ),
                         );
@@ -1103,9 +1111,8 @@ class _CalendarPageState extends State<CalendarPage> {
                 ),
                 FloatingActionButton(
                   onPressed: globalLoading.value ? null: () => _showAddEventDialog(context, _selectedDay),
-                  child: const Icon(Icons.add),
+                  child: const Icon(Icons.add,color: Colors.black),
                 )
-
               ]
             )
           ),

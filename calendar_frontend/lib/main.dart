@@ -21,9 +21,11 @@ void main() => runApp(
             builder: (context, isLoading, child){
               if(!isLoading) return const SizedBox.shrink();
               return Container(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withOpacity(0.3),
                 child: const Center(
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ),
                 )
               );
             }
@@ -55,7 +57,7 @@ class _CalendarPageState extends State<CalendarPage> {
   bool _isAllDay = false; // New variable to track if the event is all-day
   bool _isRepeating = false;
   bool _endOn = false;
-  String _searchQuery = '';
+  //String _searchQuery = '';
   final bool _isSearching = false;
   DateTime _repeatEndDate = DateTime.now().add(const Duration(days: 1)); // Default repeat end date
   CalendarFormat _calendarFormat = CalendarFormat.month;
@@ -155,7 +157,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         decoration: const InputDecoration(hintText: "Event Title"),
                       ),
                       const SizedBox(height: 10),
-                      // 3. All-Day Event Checkbox
+                      // 2. All-Day Event Checkbox
                       Row(
                         children: [
                           Checkbox(
@@ -177,7 +179,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         ],
                       ),
                       if(!_isAllDay)...[
-                        // 4. Start Date & Time Picker
+                        // 3. Start Date & Time Picker
                         //Date Picker
                         ListTile(
                           title: const Text("Start Time"),
@@ -185,7 +187,10 @@ class _CalendarPageState extends State<CalendarPage> {
                             spacing: 8,
                             children: [
                               TextButton.icon(
-                                label: Text(DateFormat('yyyy-MM-dd').format(_startTime)),
+                                label: Text(
+                                  DateFormat('yyyy-MM-dd').format(_startTime),
+                                  style: TextStyle(color: Colors.black)
+                                ),
                                 style: TextButton.styleFrom(
                                   backgroundColor: CupertinoColors.extraLightBackgroundGray,
                                   shape: const StadiumBorder(),
@@ -218,6 +223,7 @@ class _CalendarPageState extends State<CalendarPage> {
                               TextButton(
                                 child:Text(
                                   DateFormat('HH:mm').format(_startTime),
+                                  style: TextStyle(color: Colors.black),
                                 ),
                                 style: TextButton.styleFrom(
                                   backgroundColor: CupertinoColors.extraLightBackgroundGray,
@@ -257,7 +263,10 @@ class _CalendarPageState extends State<CalendarPage> {
                             spacing: 8,
                             children: [
                               TextButton.icon(
-                                label: Text(DateFormat('yyyy-MM-dd').format(_endTime)),
+                                label: Text(
+                                  DateFormat('yyyy-MM-dd').format(_endTime),
+                                  style: TextStyle(color: Colors.black)
+                                ),
                                 style: TextButton.styleFrom(
                                   backgroundColor: CupertinoColors.extraLightBackgroundGray,
                                   shape: const StadiumBorder(),
@@ -289,7 +298,8 @@ class _CalendarPageState extends State<CalendarPage> {
                               //TimePicker
                               TextButton(
                                 child:Text(
-                                  DateFormat('HH:mm').format(_endTime),
+                                  DateFormat('HH:mm').format(_endTime), 
+                                  style: TextStyle(color: Colors.black)
                                 ),
                                 style: TextButton.styleFrom(
                                   backgroundColor: CupertinoColors.extraLightBackgroundGray,
@@ -786,9 +796,9 @@ class _CalendarPageState extends State<CalendarPage> {
                                         menuSetState((){
                                           localQuery = value;
                                         });
-                                        setState((){
+                                        /*setState((){
                                           _searchQuery = value.toLowerCase();
-                                        });
+                                        });*/
                                       },
                                     ): DropdownButtonFormField<String>(
                                       value: localQuery.isEmpty ? null: localQuery,
@@ -814,9 +824,9 @@ class _CalendarPageState extends State<CalendarPage> {
                                           menuSetState((){
                                             localQuery = newValue;
                                           });
-                                          setState((){
+                                          /*setState((){
                                             _searchQuery = newValue.toLowerCase();
-                                          });
+                                          });*/
                                         }
                                       },
                                     ),
@@ -947,7 +957,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                           setState((){
                                             _selectedDay = event.startTime;
                                             _focusedDay = event.startTime;
-                                            _searchQuery = event.title.toLowerCase();
+                                            //_searchQuery = event.title.toLowerCase();
                                           });
                                         },
                                       );

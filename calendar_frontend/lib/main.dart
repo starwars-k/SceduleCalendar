@@ -443,9 +443,10 @@ class _CalendarPageState extends State<CalendarPage> {
                           ElevatedButton(
                             onPressed: () {
                               if(_titleController.text.isNotEmpty){
-                                if(!isEditing && eventToEdit != null && eventToEdit.id != null){
+                                if(isEditing && eventToEdit != null && eventToEdit.id != null){
                                   globalLoading.value = true;
                                   _updateEvent(eventToEdit.id!, _startTime, _endTime);
+                                  Navigator.pop(context);
                                 }else{
                                   _makeNewEvents(_startTime, _endTime);
                                 }
@@ -1029,7 +1030,7 @@ class _CalendarPageState extends State<CalendarPage> {
                           height: 7,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _getEventColor(dailyEvent.eventType),
+                            color: _getEventColor(event.eventType),
                           ),
                         );
                       }).toList(),

@@ -3,7 +3,7 @@ import 'package:calendar_frontend/event_model.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
-
+import 'dart:convert';
 
 final ValueNotifier<bool> globalLoading = ValueNotifier<bool>(false);
 
@@ -260,6 +260,38 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  Future<void> _saveOnExit() async {
+    await showLoadingIfNeeded(() async {
+      try{
+        final Map<String, dynamic> eventData = {
+          'title': widget.event.title,
+          'description': widget.event.description,
+          'eventType': _eventType,
+          'startTime': widget.event.startTime.toIso8601String(),
+          'endTime': widget.event.endTime.toIso8601String(),
+          'isAllDay': widget.event.isAllDay,
+          'isRepeating': widget.event.isRepeating,
+          'repeatType': widget.event.repeatType ?? 'None',
+          'endOn': widget.event.endOn ?? false,
+          'repeatEndOn': widget.event.repeatEndOn?.toIso8601String(),
+        };
+        final response = await http.put(
+          Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/${widget.event.id}'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(eventData),
+        );
+        if(response.statusCode == 200 || response.statusCode == 204){
+          widget.onUpdate();
+          print("Successfully saved on exit!");
+        }else{
+          print("Failed to save on exist: ${response.statusCode}");
+        }
+      }catch(e){
+        print("Connection Error: $e");
+      }
+    });
+  }
+
   Widget _buildTimeWidget(){
     bool isSameDay = widget.event.startTime.year == widget.event.endTime.year &&
       widget.event.startTime.month == widget.event.endTime.month &&
@@ -297,7 +329,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (bool didPop, dynamic result){
+        if(didPop){
+          _saveOnExit();
+        }
+      },
+    child: Scaffold(
       appBar: AppBar(
         title: const Text("Event Details"),
         backgroundColor: Colors.white,
@@ -331,7 +370,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           const SizedBox(height: 40),
           // 3. Event Type Dropdown
           DropdownButtonFormField<String>(
-            value: widget.event.eventType.isNotEmpty ? widget.event.eventType : widget.allEventTypes.first,
+            value: _eventType.isNotEmpty ? _eventType : widget.allEventTypes.first,
             decoration: const InputDecoration(labelText: "Event Type", border: OutlineInputBorder()),
             items: widget.allEventTypes.map((String type){
               return DropdownMenuItem<String>(
@@ -404,7 +443,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           ],
         ),
       ),
-      
+    ),
     );
   } 
   /*

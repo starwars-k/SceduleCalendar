@@ -144,7 +144,7 @@ public class EventController {
                 true
             );
             repeatedEvent.setRepeatType(repeatType);
-            repeatEvent.setSeriesId(seriesId);
+            repeatedEvent.setSeriesId(seriesId);
             eventsToSave.add(repeatedEvent);
             if("Daily".equalsIgnoreCase(repeatType)){
                 currentStartTime = currentStartTime.plusDays(1);

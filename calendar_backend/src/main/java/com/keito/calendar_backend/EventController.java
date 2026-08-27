@@ -103,11 +103,11 @@ public class EventController {
     @PutMapping("/{id}")
     public List<DailyEvent> updateEvent(@PathVariable Long id, @RequestBody DailyEvent updatedEvent){
         DailyEvent existingEvent = repository.findById(id).orElse(null);
+        List<DailyEvent> eventsToSave = new ArrayList<>();
         if(existingEvent == null){
             updatedEvent.setId(id);
-            List<DailyEvent> list = new ArrayList<>();
-            list.add(repository.save(updatedEvent));
-            return list;
+            eventsToSave.add(repository.save(updatedEvent));
+            return eventsToSave;
         }
         if(existingEvent.getSeriesId() != null && !existingEvent.getSeriesId().isEmpty()){
             repository.deleteBySeriesIdAndStartTimeGreaterThanEqual(
@@ -116,6 +116,11 @@ public class EventController {
             );
         }else{
             repository.deleteById(id);
+        }
+        if(!updatedEvent.getIsRepeating() || updatedEvent.getRepeatType() == null){
+            updatedEvent.setId(null);
+            eventsToSave.add(repository.save(updatedEvent));
+            return repository.saveAll(eventsToSave);
         }
         String seriesId = (existingEvent.getSeriesId() != null && !existingEvent.getSeriesId().isEmpty())
             ? existingEvent.getSeriesId()

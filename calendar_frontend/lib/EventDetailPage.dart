@@ -243,6 +243,36 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  Future<void> _updateEventTypeOnServer(String newType) async{
+    await showLoadingIfNeeded(() async{
+      try{
+        final Map<String, dynamic> eventData = {
+          'title': widget.event.title,
+          'description': widget.event.description,
+          'eventType': newType,
+          'startTime': widget.event.startTime.toIso8601String(),
+          'endTime': widget.event.endTime.toIso8601String(),
+          'isAllDay': widget.event.isAllDay,
+          'isRepeating': widget.event.isRepeating,
+          'repeatType': widget.event.repeatType ?? 'None',
+          'endOn': widget.event.repeatEndOn != null,
+          'repeatEndOn': widget.event.repeatEndOn?.toIso8601String(),
+        };
+        final response = await http.put(
+          Uri.parse('https://calendar-backend-qhny.onrender.com/api/events/${widget.event.id}'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(eventData),
+        );
+        if(response.statusCode == 200 || response.statusCode == 204){
+          widget.onUpdate();
+          print("EventType updated Successfully");
+        }
+      }catch(e){
+        print("Error updating eventType: $e");
+      }
+    });
+  }
+
   Future<T> showLoadingIfNeeded<T>(Future<T> Function() task) async{
     bool isShown = false;
     Timer timer = Timer(const Duration(milliseconds: 100), (){
@@ -261,10 +291,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
   }
 
   bool _isUpdatedFromOutSide = false;
-  Future<void> _saveOnExit() async {
+  Future<void> _saveOnExit() async {/*
     if(_isUpdatedFromOutSide) return;
     await showLoadingIfNeeded(() async {
-      /*try{
+      try{
         final Map<String, dynamic> eventData = {
           'title': widget.event.title,
           'description': widget.event.description,
@@ -284,15 +314,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
         );
         if(response.statusCode == 200 || response.statusCode == 204){
           widget.onUpdate();
-          _eventType = widget.event.eventType;
+          //_eventType = widget.event.eventType;
           print("Successfully saved on exit!");
         }else{
           print("Failed to save on exist: ${response.statusCode}");
         }
       }catch(e){
         print("Connection Error: $e");
-      }*/widget.onUpdate();
-    });
+      }
+    });*/widget.onUpdate();
   }
 
   Widget _buildTimeWidget(){
@@ -389,12 +419,13 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ),
               );
             }).toList(),
-            onChanged: (String? newValue){
-              if(newValue != null){
+            onChanged: (String? newValue) async{
+              if(newValue != null && newValue != _eventType){
                 setState(() {
                   _eventType = newValue;
                 });
                 widget.onEventTypeChanged(newValue);
+                await _updateEventTypeOnServer(newValue);
               }
             },
           ),

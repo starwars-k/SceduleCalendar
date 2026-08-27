@@ -108,6 +108,8 @@ class _CalendarPageState extends State<CalendarPage> {
     _endOn = isEditing ? (eventToEdit.repeatEndOn != null) : false; // Reset end on checkbox
     if(isEditing && eventToEdit.repeatEndOn != null){
       _repeatEndDate = eventToEdit.repeatEndOn!; //: initialDate.add(const Duration(days: 1)); // Reset repeat end date
+    }else{
+      _repeatEndDate = initialDate.add(const Duration(days:1));
     }
     _memoController.text = isEditing ? eventToEdit.description : '';
     _eventType =  isEditing ? eventToEdit.eventType : 'Task'; // Reset event type to default if not in list

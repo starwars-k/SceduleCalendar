@@ -12,7 +12,7 @@ class EventDetailPage extends StatefulWidget {
   final DailyEvent event;
   final Function() onUpdate;
   final Function(int) onDelete;
-  final Function() onEdit;
+  final Function(String) onEdit;
   final List<String> allEventTypes;
   final Function(String) onEventTypeChanged;
 
@@ -377,7 +377,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           IconButton(
             icon: const Icon(Icons.edit, size: 28, color: Colors.green),
             onPressed: ()async{
-              widget.onEdit();
+              widget.onEdit(_eventType);
               setState(() {
                 _isUpdatedFromOutSide = true;
               });

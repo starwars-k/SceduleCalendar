@@ -96,7 +96,7 @@ class _CalendarPageState extends State<CalendarPage> {
     fetchEventsFromJava();// Load datafrom backend immediately
   }
 
-  Future<bool?> _showAddEventDialog(BuildContext context, DateTime initialDate, {DailyEvent? eventToEdit}) async {
+  Future<bool?> _showAddEventDialog(BuildContext context, DateTime initialDate, {DailyEvent? eventToEdit, String? initialEventType}) async {
     final bool isEditing = eventToEdit != null;
     _titleController.text = isEditing ? eventToEdit.title : '';
     _isAllDay = isEditing ? eventToEdit.isAllDay : false; // Reset all-day checkbox
@@ -112,7 +112,7 @@ class _CalendarPageState extends State<CalendarPage> {
       _repeatEndDate = initialDate.add(const Duration(days:1));
     }
     _memoController.text = isEditing ? eventToEdit.description : '';
-    _eventType =  isEditing ? eventToEdit.eventType : 'Task'; // Reset event type to default if not in list
+    _eventType =  initialEventType ?? (isEditing ? eventToEdit.eventType : 'Task'); // Reset event type to default if not in list
 
     final ScrollController modalScrollController = ScrollController();
     return await showModalBottomSheet<bool>(
@@ -1089,11 +1089,12 @@ class _CalendarPageState extends State<CalendarPage> {
                               event: event, 
                               onDelete: (id) => _deleteEvent(id), 
                               onUpdate: () => fetchEventsFromJava(),
-                              onEdit: ()async{
+                              onEdit:(currentEventType) async{
                                 final bool ? isUpdated = await _showAddEventDialog(
                                   context, 
                                   event.startTime, 
-                                  eventToEdit: event,                                  
+                                  eventToEdit: event, 
+                                  initialEventType: currentEventType,                                 
                                 );
                                 if(isUpdated == true){
                                   if(context.mounted){

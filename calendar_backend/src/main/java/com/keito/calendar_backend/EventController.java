@@ -30,7 +30,7 @@ public class EventController {
         String seriesId = UUID.randomUUID().toString();
         LocalDateTime currentStartTime = event.getStartTime();
         LocalDateTime currentEndTime = event.getEndTime();
-        LocalDateTime repeatEndDate = event.getRepeatEndDate();
+        LocalDateTime repeatEndDate = event.getRepeatEndOn();
         String repeatType = event.getRepeatType();
 
         int maxCount = 1000; // Limit to prevent infinite loops
@@ -122,7 +122,7 @@ public class EventController {
             : UUID.randomUUID().toString();
         LocalDateTime currentStartTime = updatedEvent.getStartTime();
         LocalDateTime currentEndTime = updatedEvent.getEndTime();
-        LocalDateTime repeatEndDate = updatedEvent.getRepeatEndDate();
+        LocalDateTime repeatEndDate = updatedEvent.getRepeatEndOn();
         String repeatType = updatedEvent.getRepeatType();
         int maxCount = 1000;
         for(int i=0; i<maxCount; i++){
@@ -134,7 +134,7 @@ public class EventController {
                 updatedEvent.getDescription(),
                 currentStartTime,
                 currentEndTime,
-                updatedEvent.getEventType,
+                updatedEvent.getEventType(),
                 updatedEvent.getIsAllDay(),
                 true
             );

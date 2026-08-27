@@ -367,7 +367,7 @@ class _CalendarPageState extends State<CalendarPage> {
                               value: option,
                               child: Text(option),
                             )).toList(),
-                          onChanged: (value) => setState(() {
+                          onChanged: (value) => setDialogState(() {
                             _repeatType = value!;
                           }),
                         ),
@@ -634,7 +634,7 @@ class _CalendarPageState extends State<CalendarPage> {
         'isRepeating': _isRepeating,
         'repeatType': _isRepeating ? _repeatType : 'None',
         'endOn': _isRepeating ? _endOn : false,
-        'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
+        'repeatEndOn': (_isRepeating && _endOn) ? _formatToBackendIso(_repeatEndDate) : null,
       };
       print("Updating event with ID $id: $eventData");
       final response = await http.put(

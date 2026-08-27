@@ -264,7 +264,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _saveOnExit() async {
     if(_isUpdatedFromOutSide) return;
     await showLoadingIfNeeded(() async {
-      try{
+      /*try{
         final Map<String, dynamic> eventData = {
           'title': widget.event.title,
           'description': widget.event.description,
@@ -274,7 +274,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           'isAllDay': widget.event.isAllDay,
           'isRepeating': widget.event.isRepeating,
           'repeatType': widget.event.repeatType ?? 'None',
-          'endOn': widget.event.endOn ?? false,
+          'endOn': widget.event.repeatEndOn != null,
           'repeatEndOn': widget.event.repeatEndOn?.toIso8601String(),
         };
         final response = await http.put(
@@ -291,7 +291,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         }
       }catch(e){
         print("Connection Error: $e");
-      }
+      }*/widget.onUpdate();
     });
   }
 

@@ -96,7 +96,7 @@ class _CalendarPageState extends State<CalendarPage> {
     fetchEventsFromJava();// Load datafrom backend immediately
   }
 
-  void _showAddEventDialog(BuildContext context, DateTime initialDate, {DailyEvent? eventToEdit}){
+  Future<bool?> _showAddEventDialog(BuildContext context, DateTime initialDate, {DailyEvent? eventToEdit}) async {
     final bool isEditing = eventToEdit != null;
     _titleController.text = isEditing ? eventToEdit.title : '';
     _isAllDay = isEditing ? eventToEdit.isAllDay : false; // Reset all-day checkbox
@@ -106,12 +106,14 @@ class _CalendarPageState extends State<CalendarPage> {
     _repeatType = isEditing && eventToEdit.repeatType != null ? eventToEdit.repeatType! : 'None'; // Reset repeat type when opening the dialog
     _repeatOptions.contains(_repeatType) ? _repeatType : 'Daily'; // Reset repeat type to default if not in list
     _endOn = isEditing ? (eventToEdit.repeatEndOn != null) : false; // Reset end on checkbox
-    _repeatEndDate = isEditing && eventToEdit.repeatEndOn != null ? eventToEdit.repeatEndOn! : initialDate.add(const Duration(days: 1)); // Reset repeat end date
+    if(isEditing && eventToEdit.repeatEndOn != null){
+      _repeatEndDate = eventToEdit.repeatEndOn!; //: initialDate.add(const Duration(days: 1)); // Reset repeat end date
+    }
     _memoController.text = isEditing ? eventToEdit.description : '';
     _eventType =  isEditing ? eventToEdit.eventType : 'Task'; // Reset event type to default if not in list
 
     final ScrollController modalScrollController = ScrollController();
-    showModalBottomSheet(
+    return await showModalBottomSheet<bool>(
       context:context,
       isScrollControlled: true,
       showDragHandle: false,
@@ -136,7 +138,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator.pop(context, false),
                   ),
                 ],
               ),
@@ -437,18 +439,20 @@ class _CalendarPageState extends State<CalendarPage> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () => Navigator.pop(context, false),
                             child: const Text("Cancel"),
                           ),
                           ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async{
                               if(_titleController.text.isNotEmpty){
                                 if(isEditing && eventToEdit != null && eventToEdit.id != null){
                                   globalLoading.value = true;
-                                  _updateEvent(eventToEdit.id!, _startTime, _endTime);
-                                  Navigator.pop(context);
+                                  bool success = await _updateEvent(eventToEdit.id!, _startTime, _endTime);
+                                  if(success && context.mounted){
+                                    Navigator.pop(context, true);
+                                  }
                                 }else{
-                                  _makeNewEvents(_startTime, _endTime);
+                                  await _makeNewEvents(_startTime, _endTime);
                                 }
                               }else{
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -616,7 +620,8 @@ class _CalendarPageState extends State<CalendarPage> {
     });
   }
 
-  Future<void> _updateEvent(int id, DateTime startTime, DateTime endTime) async {
+  Future<bool> _updateEvent(int id, DateTime startTime, DateTime endTime) async {
+    bool isSuccess = false;
     await showLoadingIfNeeded(() async {
     try{
       final Map<String, dynamic> eventData = {
@@ -639,17 +644,20 @@ class _CalendarPageState extends State<CalendarPage> {
         body: jsonEncode(eventData),
       );
       if(response.statusCode == 200 || response.statusCode == 204){
-        if(!mounted) return; // Check if the widget is still mounted before calling setState
-        fetchEventsFromJava(); // Refresh the event list after updating
-        Navigator.pop(context);
+        if(mounted) { // Check if the widget is still mounted before calling setState
+          await fetchEventsFromJava();
+        }
+        isSuccess = true;
       }else{
         print("Failed to update event. Status code: ${response.statusCode}");
-        print("Response body: ${response.body}");
+        isSuccess = false;
       }
     }catch(e){
       print("EXCEPTION caught while updating event: $e");
+      isSuccess = false;
     }
     });
+    return isSuccess;
   }
   /*
   List<DailyEvent> get _filteredEvents{
@@ -1057,6 +1065,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 },
               ),
               const SizedBox(height: 8.0),
+              const Divider(),
               Expanded(
                 child: ListView.builder(
                   itemCount: _selectedEvents.length,
@@ -1078,12 +1087,17 @@ class _CalendarPageState extends State<CalendarPage> {
                               event: event, 
                               onDelete: (id) => _deleteEvent(id), 
                               onUpdate: () => fetchEventsFromJava(),
-                              onEdit: (){
-                                _showAddEventDialog(
+                              onEdit: ()async{
+                                final bool ? isUpdated = await _showAddEventDialog(
                                   context, 
                                   event.startTime, 
                                   eventToEdit: event,                                  
                                 );
+                                if(isUpdated == true){
+                                  if(context.mounted){
+                                    Navigator.pop(context);
+                                  }
+                                }
                               },
                               allEventTypes: _eventTypes,
                               onEventTypeChanged: (newType){

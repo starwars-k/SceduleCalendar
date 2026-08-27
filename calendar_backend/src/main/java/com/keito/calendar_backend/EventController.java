@@ -101,25 +101,67 @@ public class EventController {
     }
 
     @PutMapping("/{id}")
-    public DailyEvent updateEvent(@PathVariable Long id, @RequestBody DailyEvent updatedEvent){
-        return repository.findById(id)
-            .map(existingEvent -> {
-                existingEvent.setTitle(updatedEvent.getTitle());
-                existingEvent.setDescription(updatedEvent.getDescription());
-                existingEvent.setStartTime(updatedEvent.getStartTime());
-                existingEvent.setEndTime(updatedEvent.getEndTime());
-                existingEvent.setEventType(updatedEvent.getEventType());
-                existingEvent.setIsAllDay(updatedEvent.getIsAllDay());
-                existingEvent.setIsRepeating(updatedEvent.getIsRepeating());
-                existingEvent.setRepeatType(updatedEvent.getRepeatType());
-                existingEvent.setRepeatEndOn(updatedEvent.getRepeatEndOn());
-                existingEvent.setEndOn(updatedEvent.getEndOn());
-                return repository.save(existingEvent);
-            })
-            .orElseGet(() -> {
-                updatedEvent.setId(id);
-                return repository.save(updatedEvent);
-            });
+    public List<DailyEvent> updateEvent(@PathVariable Long id, @RequestBody DailyEvent updatedEvent){
+        DailyEvent existingEvent = repository.findById(id).orElse(null);
+        if(existingEvent == null){
+            updatedEvent.setId(id);
+            List<DailyEvent> list = new ArrayList<>();
+            list.add(repository.save(updatedEvent));
+            return list;
+        }
+        if(existingEvent.getSeriesId() != null && !existingEvent.getSeriesId().isEmpty()){
+            repository.deleteBySeriesIdAndStartTimeGreaterThanEqual(
+                existingEvent.getSeriesId(),
+                existingEvent.getStartTime()
+            );
+        }else{
+            repository.deleteById(id);
+        }
+        String seriesId = (existingEvent.getSeriesId() != null && !existingEvent.getSeriesId().isEmpty())
+            ? existingEvent.getSeriesId()
+            : UUID.randomUUID().toString();
+        LocalDateTime currentStartTime = updatedEvent.getStartTime();
+        LocalDateTime currentEndTime = updatedEvent.getEndTime();
+        LocalDateTime repeatEndDate = updatedEvent.getRepeatEndDate();
+        String repeatType = updatedEvent.getRepeatType();
+        int maxCount = 1000;
+        for(int i=0; i<maxCount; i++){
+            if(repeatEndDate != null && currentStartTime.isAfter(repeatEndDate)){
+                break;
+            }
+            DailyEvent repeatedEvent = new DailyEvent(
+                updatedEvent.getTitle(),
+                updatedEvent.getDescription(),
+                currentStartTime,
+                currentEndTime,
+                updatedEvent.getEventType,
+                updatedEvent.getIsAllDay(),
+                true
+            );
+            repeatedEvent.setRepeatType(repeatType);
+            repeatEvent.setSeriesId(seriesId);
+            eventsToSave.add(repeatedEvent);
+            if("Daily".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusDays(1);
+                currentEndTime = currentEndTime.plusDays(1);
+            }else if("Weekly".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusWeeks(1);
+                currentEndTime = currentEndTime.plusWeeks(1);
+            }else if("Biweekly".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusWeeks(2);
+                currentEndTime = currentEndTime.plusWeeks(2);
+            }else if("monthly".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusMonths(1);
+                currentEndTime = currentEndTime.plusMonths(1);
+                break;
+            }else if("yearly".equalsIgnoreCase(repeatType)){
+                currentStartTime = currentStartTime.plusYears(1);
+                currentEndTime = currentEndTime.plusYears(1);
+            }else{
+                break;
+            }
+        }
+        return repository.saveAll(eventsToSave);
     }
 
     @PostMapping("/batch")

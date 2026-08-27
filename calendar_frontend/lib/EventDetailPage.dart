@@ -260,7 +260,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
     }
   }
 
+  bool _isUpdatedFromOutSide = false;
   Future<void> _saveOnExit() async {
+    if(_isUpdatedFromOutSide) return;
     await showLoadingIfNeeded(() async {
       try{
         final Map<String, dynamic> eventData = {
@@ -282,6 +284,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
         );
         if(response.statusCode == 200 || response.statusCode == 204){
           widget.onUpdate();
+          _eventType = widget.event.eventType;
           print("Successfully saved on exit!");
         }else{
           print("Failed to save on exist: ${response.statusCode}");
@@ -343,7 +346,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit, size: 28, color: Colors.green),
-            onPressed: widget.onEdit,
+            onPressed: ()async{
+              widget.onEdit();
+              setState(() {
+                _isUpdatedFromOutSide = true;
+              });
+            },
           ),/*
           IconButton(
             icon: Icon(Icons.delete, size: 28, color: Colors.red.shade400),
@@ -421,9 +429,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 350),
           ],
-          const SizedBox(height: 400),
+          if(widget.event.description.isEmpty) const SizedBox(height:400),
           Padding(
             padding: const EdgeInsets.only(top: 30.0),
             child: Align(

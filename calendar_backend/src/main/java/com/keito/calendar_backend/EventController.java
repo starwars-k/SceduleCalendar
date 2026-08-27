@@ -30,12 +30,12 @@ public class EventController {
         String seriesId = UUID.randomUUID().toString();
         LocalDateTime currentStartTime = event.getStartTime();
         LocalDateTime currentEndTime = event.getEndTime();
-        LocalDateTime repeatEndOn = event.getRepeatEndOn();
+        LocalDateTime repeatEndDate = event.getRepeatEndDate();
         String repeatType = event.getRepeatType();
 
         int maxCount = 1000; // Limit to prevent infinite loops
         for(int i = 0; i < maxCount; i++){
-            if(repeatEndOn != null && currentStartTime.isAfter(repeatEndOn)){
+            if(repeatEndDate != null && currentStartTime.isAfter(repeatEndDate)){
                 break;
             }
             DailyEvent repeatedEvent = new DailyEvent(

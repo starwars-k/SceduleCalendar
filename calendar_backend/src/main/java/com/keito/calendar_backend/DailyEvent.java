@@ -92,10 +92,10 @@ public class DailyEvent {
     public void setEndOn(boolean endOn){
         this.endOn = endOn;
     }
-    public LocalDateTime getRepeatEndOn(){
+    public LocalDateTime getRepeatEndDate(){
         return repeatEndOn;
     }
-    public void setRepeatEndOn(LocalDateTime repeatEndOn){
+    public void setRepeatEndDate(LocalDateTime repeatEndOn){
         this.repeatEndOn = repeatEndOn;
     }
     public String getEventType() {

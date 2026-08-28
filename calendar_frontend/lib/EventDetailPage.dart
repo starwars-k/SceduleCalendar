@@ -329,35 +329,54 @@ class _EventDetailPageState extends State<EventDetailPage> {
     bool isSameDay = widget.event.startTime.year == widget.event.endTime.year &&
       widget.event.startTime.month == widget.event.endTime.month &&
       widget.event.startTime.day == widget.event.endTime.day;
+    Widget timeTextWidget;
     if(widget.event.isAllDay&&isSameDay){
-      return Text(
+      timeTextWidget = Text(
         style: TextStyle(
           fontSize: 15,
         ),
         '${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)}\nAll-Day'
       );
     }else if(widget.event.isAllDay){
-      return Text(
+      timeTextWidget = Text(
         style: TextStyle(
           fontSize: 15,
         ),
         '${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)} - ${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.endTime)}\nAll-Day'
       );
     }else if(isSameDay){
-      return Text(
+      timeTextWidget = Text(
         style: TextStyle(
           fontSize: 15,
         ),
         '${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)}\n${DateFormat('HH:mm').format(widget.event.startTime)}-${DateFormat('HH:mm').format(widget.event.endTime)}'
       );
     }else{
-      return Text(
+      timeTextWidget = Text(
         style: TextStyle(
           fontSize: 15,
         ),
         'Start:${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.startTime)}\nEnd:${DateFormat('EEEE, MMMM dd, yyyy').format(widget.event.endTime)}'
       );
     }
+    List<Widget> children = [timeTextWidget];
+    if(widget.event.isRepeating == true && widget.event.repeatType != null && widget.event.repeatType != 'None'){
+      String repeatInfo = 'Repeats: ${widget.event.repeatType}';
+      children.addAll([
+        const SizedBox(height:6),
+        Text(
+          repeatInfo,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.red,
+          ),
+        ),
+      ]);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
   }
 
   @override
@@ -405,7 +424,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           const SizedBox(height: 20),
           //2. Time
           _buildTimeWidget(),
-          const SizedBox(height: 40),
+          SizedBox(height: 30),
           // 3. Event Type Dropdown
           DropdownButtonFormField<String>(
             value: _eventType.isNotEmpty ? _eventType : widget.allEventTypes.first,

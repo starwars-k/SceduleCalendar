@@ -22,3 +22,6 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+dependecies{
+    implementation 'org.postgresql:postgresql'
+}

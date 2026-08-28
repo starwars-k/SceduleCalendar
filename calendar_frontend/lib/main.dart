@@ -600,7 +600,7 @@ class _CalendarPageState extends State<CalendarPage> {
         'isRepeating': _isRepeating,
         'repeatType': _isRepeating ? _repeatType : 'None',
         'endOn': _isRepeating ? _endOn : false,
-        'repeatEndOn': _isRepeating && _endOn ? _formatToBackendIso(_repeatEndDate) : null,
+        'repeatEndOn': (_isRepeating && _endOn) ? _formatToBackendIso(DateTime(_repeatEndDate.year, _repeatEndDate.month, _repeatEndDate.day, 23, 59, 59)) : null,
       };
       //print("Sending event to server: $eventData");
       final response = await http.post(
@@ -636,7 +636,7 @@ class _CalendarPageState extends State<CalendarPage> {
         'isRepeating': _isRepeating,
         'repeatType': _isRepeating ? _repeatType : 'None',
         'endOn': _isRepeating ? _endOn : false,
-        'repeatEndOn': (_isRepeating && _endOn) ? _formatToBackendIso(_repeatEndDate) : null,
+        'repeatEndOn': (_isRepeating && _endOn) ? _formatToBackendIso(DateTime(_repeatEndDate.year, _repeatEndDate.month, _repeatEndDate.day, 23, 59, 59)) : null,
       };
       print("Updating event with ID $id: $eventData");
       final response = await http.put(

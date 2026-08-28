@@ -1,4 +1,5 @@
 package com.keito.calendar_backend;
+import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
@@ -21,7 +22,7 @@ public class EventController {
     }
 
     @PostMapping({"", "/"})
-    public ResponseEntity<void> createEvent(@RequestBody DailyEvent event) {
+    public ResponseEntity<Void> createEvent(@RequestBody DailyEvent event) {
         //List<DailyEvent> eventsToSave = new ArrayList<>();
         if(!event.getIsRepeating() || event.getRepeatType() == null){
             //eventsToSave.add(repository.save(event));
@@ -51,7 +52,7 @@ public class EventController {
             );
             repeatedEvent.setRepeatType(repeatType);
             repeatedEvent.setSeriesId(seriesId);
-            repeatedEvent.setRepeatedEndOn(repeatedEndDate);
+            repeatedEvent.setRepeatEndOn(repeatEndDate);
             repeatedEvent.setEndOn(event.getEndOn());
             eventsToSave.add(repeatedEvent);
 

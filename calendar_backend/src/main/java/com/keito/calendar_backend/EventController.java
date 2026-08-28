@@ -21,18 +21,20 @@ public class EventController {
     }
 
     @PostMapping({"", "/"})
-    public List<DailyEvent> createEvent(@RequestBody DailyEvent event) {
-        List<DailyEvent> eventsToSave = new ArrayList<>();
+    public ResponseEntity<void> createEvent(@RequestBody DailyEvent event) {
+        //List<DailyEvent> eventsToSave = new ArrayList<>();
         if(!event.getIsRepeating() || event.getRepeatType() == null){
-            eventsToSave.add(repository.save(event));
-            return eventsToSave;
+            //eventsToSave.add(repository.save(event));
+            repository.save(event);
+            //return eventsToSave;
+            return ResponseEntity.ok().build();
         }
         String seriesId = UUID.randomUUID().toString();
         LocalDateTime currentStartTime = event.getStartTime();
         LocalDateTime currentEndTime = event.getEndTime();
         LocalDateTime repeatEndDate = event.getRepeatEndOn();
         String repeatType = event.getRepeatType();
-
+        List<DailyEvent> eventsToSave = new ArrayList<>();
         int maxCount = 365; // Limit to prevent infinite loops
         for(int i = 0; i < maxCount; i++){
             if(repeatEndDate != null && currentStartTime.isAfter(repeatEndDate)){
@@ -49,6 +51,8 @@ public class EventController {
             );
             repeatedEvent.setRepeatType(repeatType);
             repeatedEvent.setSeriesId(seriesId);
+            repeatedEvent.setRepeatedEndOn(repeatedEndDate);
+            repeatedEvent.setEndOn(event.getEndOn());
             eventsToSave.add(repeatedEvent);
 
             if("Daily".equalsIgnoreCase(repeatType)){

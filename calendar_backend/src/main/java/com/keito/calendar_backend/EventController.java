@@ -33,7 +33,7 @@ public class EventController {
         LocalDateTime repeatEndDate = event.getRepeatEndOn();
         String repeatType = event.getRepeatType();
 
-        int maxCount = 1000; // Limit to prevent infinite loops
+        int maxCount = 365; // Limit to prevent infinite loops
         for(int i = 0; i < maxCount; i++){
             if(repeatEndDate != null && currentStartTime.isAfter(repeatEndDate)){
                 break;
@@ -71,7 +71,8 @@ public class EventController {
                 break;
             }
         }
-        return repository.saveAll(eventsToSave);
+        repository.saveAll(eventsToSave);
+        return ResponseEntity.ok().build();
     }
         
     @DeleteMapping("/{id}")
